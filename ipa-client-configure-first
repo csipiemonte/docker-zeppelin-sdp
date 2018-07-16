@@ -27,9 +27,11 @@ function usage () {
 }
 
 function stop_running () {
-	systemctl stop-running
+	echo "in stop_running()"
+	systemctl stop-running	
+	echo "fine stop_running()"
 }
-trap stop_running TERM
+trap stop_running SIGTERM
 
 systemctl stop dbus.service
 rm -rf /var/run/*.pid
