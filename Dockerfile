@@ -46,10 +46,10 @@ ADD systemctl /usr/bin/systemctl
 # Install FreeIPA client + Zeppelin
 RUN yum install -y ipa-client dbus-python perl 'perl(Data::Dumper)' 'perl(Time::HiRes)' && yum clean all \
 
-    ln -sf dbus.service /etc/systemd/system/messagebus.service \
-    useradd -ms /bin/bash $env_zeppelin_user \
+    && ln -sf dbus.service /etc/systemd/system/messagebus.service \
+    && useradd -ms /bin/bash $env_zeppelin_user \
     
-    wget -nv -O /etc/yum.repos.d/hdp.repo http://public-repo-1.hortonworks.com/HDP/centos7/2.x/updates/2.6.0.3/hdp.repo \
+    && wget -nv -O /etc/yum.repos.d/hdp.repo http://public-repo-1.hortonworks.com/HDP/centos7/2.x/updates/2.6.0.3/hdp.repo \
     && yum install -y ambari-agent-2.5.0.3-7.x86_64 zeppelin_2_6_0_3_8-0.7.0.2.6.0.3-8.noarch \
     && chown -R $env_zeppelin_user:$env_zeppelin_user /etc/zeppelin/ \
     && chown -R $env_zeppelin_user:$env_zeppelin_user /var/lib/zeppelin/ \
