@@ -8,16 +8,6 @@ ENV env_zeppelin_user=$zeppelin_user
 
 RUN yum swap -y -- remove fakesystemd -- install systemd systemd-libs && yum clean all
 
-# Install FreeIPA client
-RUN yum install -y ipa-client dbus-python perl 'perl(Data::Dumper)' 'perl(Time::HiRes)' && yum clean all
-
-ADD dbus.service /etc/systemd/system/dbus.service
-RUN ln -sf dbus.service /etc/systemd/system/messagebus.service
-
-ADD systemctl /usr/bin/systemctl
-
-RUN useradd -ms /bin/bash $env_zeppelin_user
-
 #Install Oracle JVM
 RUN java_version=8u172; \
     java_bnumber=11; \
@@ -37,9 +27,7 @@ RUN java_version=8u172; \
     && alternatives --set javaws /opt/jdk$java_semver/jre/bin/javaws \
     && alternatives --set javac /opt/jdk$java_semver/bin/javac \
     && alternatives --set jar /opt/jdk$java_semver/bin/jar \
-    && java -version
-
-
+    && java -version       
 
 RUN yum -y install unzip \
     && wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" \
@@ -51,7 +39,17 @@ RUN yum -y install unzip \
     && chmod -R 640 /opt/jre-home/jre/lib/security/ \
     && chown -R root:root /opt/jre-home/jre/lib/security/
 
-RUN wget -nv -O /etc/yum.repos.d/hdp.repo http://public-repo-1.hortonworks.com/HDP/centos7/2.x/updates/2.6.0.3/hdp.repo \
+
+ADD dbus.service /etc/systemd/system/dbus.service
+ADD systemctl /usr/bin/systemctl
+
+# Install FreeIPA client + Zeppelin
+RUN yum install -y ipa-client dbus-python perl 'perl(Data::Dumper)' 'perl(Time::HiRes)' && yum clean all \
+
+    ln -sf dbus.service /etc/systemd/system/messagebus.service \
+    useradd -ms /bin/bash $env_zeppelin_user \
+    
+    wget -nv -O /etc/yum.repos.d/hdp.repo http://public-repo-1.hortonworks.com/HDP/centos7/2.x/updates/2.6.0.3/hdp.repo \
     && yum install -y ambari-agent-2.5.0.3-7.x86_64 zeppelin_2_6_0_3_8-0.7.0.2.6.0.3-8.noarch \
     && chown -R $env_zeppelin_user:$env_zeppelin_user /etc/zeppelin/ \
     && chown -R $env_zeppelin_user:$env_zeppelin_user /var/lib/zeppelin/ \
@@ -65,6 +63,5 @@ RUN wget -nv -O /etc/yum.repos.d/hdp.repo http://public-repo-1.hortonworks.com/H
 ADD ipa-client-configure-first /usr/sbin/ipa-client-configure-first
 
 RUN chmod -v +x /usr/bin/systemctl /usr/sbin/ipa-client-configure-first
-
 
 ENTRYPOINT ["/usr/sbin/ipa-client-configure-first"]
