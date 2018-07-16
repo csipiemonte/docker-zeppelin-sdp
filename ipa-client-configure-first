@@ -33,6 +33,7 @@ function stop_running () {
 }
 trap stop_running SIGTERM
 
+
 systemctl stop dbus.service
 rm -rf /var/run/*.pid
 rm -f /run/systemctl-lite-running/*
