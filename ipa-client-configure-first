@@ -26,6 +26,7 @@ function usage () {
 	exit 1
 }
 
+function stop_running () {
 	echo "trying to stop..."
 	systemctl stop-running	
 	echo "fine stop_running()"
