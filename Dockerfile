@@ -1,12 +1,23 @@
 # Clone from the CentOS 7
-FROM centos:centos7
+FROM centos:7
 
 MAINTAINER Luca Gioppo
 
-ARG zeppelin_user=zeppelin_dock1
-ENV env_zeppelin_user=$zeppelin_user
+ENV container docker
 
-RUN yum swap -y -- remove fakesystemd -- install systemd systemd-libs && yum clean all
+RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == \
+	systemd-tmpfiles-setup.service ] || rm -f $i; done); \
+	rm -f /lib/systemd/system/multi-user.target.wants/*;\
+	rm -f /etc/systemd/system/*.wants/*;\
+	rm -f /lib/systemd/system/local-fs.target.wants/*; \
+	rm -f /lib/systemd/system/sockets.target.wants/*udev*; \
+	rm -f /lib/systemd/system/sockets.target.wants/*initctl*; \
+	rm -f /lib/systemd/system/basic.target.wants/*;\
+	rm -f /lib/systemd/system/anaconda.target.wants/*;
+		
+VOLUME [ "/sys/fs/cgroup" ]
+
+# RUN yum swap -y -- remove fakesystemd -- install systemd systemd-libs && yum clean all
 
 #Install Oracle JVM
 RUN java_version=8u172; \
@@ -42,6 +53,9 @@ RUN yum -y install unzip \
 ADD dbus.service /etc/systemd/system/dbus.service
 ADD systemctl /usr/bin/systemctl
 
+ARG zeppelin_user=zeppelin_dock1
+ENV env_zeppelin_user=$zeppelin_user
+
 # Install FreeIPA client + Zeppelin
 RUN yum install -y ipa-client dbus-python perl 'perl(Data::Dumper)' 'perl(Time::HiRes)' && yum clean all \
 
@@ -63,11 +77,5 @@ ADD ipa-client-configure-first /usr/sbin/ipa-client-configure-first
 
 RUN chmod -v +x /usr/bin/systemctl /usr/sbin/ipa-client-configure-first
 
-# Add Tini
-ENV TINI_VERSION v0.18.0
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
-RUN chmod +x /tini
-ENTRYPOINT ["/tini", "--"]
+ENTRYPOINT ["/usr/sbin/ipa-client-configure-first"]
 
-#ENTRYPOINT ["/usr/sbin/ipa-client-configure-first"]
-CMD ["/usr/sbin/ipa-client-configure-first"]
