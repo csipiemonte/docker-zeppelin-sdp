@@ -77,5 +77,6 @@ ADD ipa-client-configure-first /usr/sbin/ipa-client-configure-first
 
 RUN chmod -v +x /usr/bin/systemctl /usr/sbin/ipa-client-configure-first
 
-ENTRYPOINT ["/usr/sbin/ipa-client-configure-first"]
+ENTRYPOINT ["/tini", "-v", "--", "/usr/sbin/ipa-client-configure-first"]
+#ENTRYPOINT ["/usr/sbin/ipa-client-configure-first"]
 
