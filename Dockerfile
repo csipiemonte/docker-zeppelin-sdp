@@ -77,6 +77,12 @@ ADD ipa-client-configure-first /usr/sbin/ipa-client-configure-first
 
 RUN chmod -v +x /usr/bin/systemctl /usr/sbin/ipa-client-configure-first
 
-ENTRYPOINT ["/tini", "-v", "--", "/usr/sbin/ipa-client-configure-first"]
+# Add Tini
+ENV TINI_VERSION v0.18.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
+ENTRYPOINT ["/tini", "--", "/usr/sbin/ipa-client-configure-first"]
+
+#CMD ["/usr/sbin/ipa-client-configure-first"]
 #ENTRYPOINT ["/usr/sbin/ipa-client-configure-first"]
 
