@@ -1,4 +1,4 @@
-FROM local/c7-systemd
+FROM pietrocannalire/centos-base
 
 MAINTAINER PC & OTHERS
 
