@@ -16,6 +16,14 @@
 
 set -e
 
+#inherit init (PID=1) variables
+
+for e in $(tr "\000" "\n" < /proc/1/environ); do
+        eval "export $e"
+done
+
+
+
 function usage () {
 	if [ -n "$1" ] ; then
 		echo $1 >&2
@@ -27,22 +35,15 @@ function usage () {
 }
 
 function stop_running () {
-	echo "trying to stop..."
-	systemctl stop-running	
-	echo "fine stop_running()"
+        echo "trying to stop"
+	systemctl stop sssd
+# here we need to get the PID of the java process and send a sigterm also to it
 }
 trap stop_running SIGTERM
 
-function kill_running () {
-	echo "trying to kill..."
-	systemctl stop-running	
-	echo "fine kill_running"
-}
-trap stop_running SIGKILL
-
-systemctl stop dbus.service
+#systemctl stop dbus.service
 rm -rf /var/run/*.pid
-rm -f /run/systemctl-lite-running/*
+#rm -f /run/systemctl-lite-running/*
 
 if [ -n "$IPA_PORT_53_UDP_ADDR" ] ; then
 	echo "nameserver $IPA_PORT_53_UDP_ADDR" > /etc/resolv.conf
@@ -60,7 +61,7 @@ if [ -f /etc/ipa/ca.crt ] ; then
 		fi
 	fi
 	echo "System is already FreeIPA-enrolled, starting the services."
-	systemctl start-enabled
+	#systemctl start-enabled
 	echo "System is ready."
         cd /usr/hdp/2.6.0.3-8/zeppelin
         bin/zeppelin.sh
@@ -84,7 +85,7 @@ else
 		fi
 	fi
 
-	/usr/sbin/ipa-client-install $IPA_CLIENT_INSTALL_OPTS $HOSTNAME_OPTS -p admin -w "$PASSWORD" -U -v --domain=pochdp.csi.it --mkhomedir --realm=POCHDP.CSI.IT --server=tst-kerb1.pochdp.csi.it  --enable-dns-updates < /dev/null
+	/usr/sbin/ipa-client-install $IPA_CLIENT_INSTALL_OPTS  --force --no-nisdomain -p admin -w "$PASSWORD" -U -v  --mkhomedir --realm=POCHDP.CSI.IT --domain=pochdp.csi.it --server=tst-kerb1.pochdp.csi.it  --enable-dns-updates < /dev/null
 	cp -f /etc/hostname /etc/hostname.ipa-client
 	echo "FreeIPA-enrolled."
 fi
@@ -128,4 +129,3 @@ if [ -z "$1" -o "$1" != "-s" ] ; then
 #		while true ; do sleep 1000 & wait $! ; done
 	fi
 fi
-
