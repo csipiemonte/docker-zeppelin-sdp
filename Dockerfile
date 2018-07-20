@@ -1,4 +1,4 @@
-FROM pietrocannalire/centos-base
+FROM pietrocannalire/centos-base 
 
 MAINTAINER PC & OTHERS
 
