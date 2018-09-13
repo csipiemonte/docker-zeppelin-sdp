@@ -107,7 +107,7 @@ if [ -z "$1" -o "$1" != "-s" ] ; then
                 echo -n "$PASSWORD" | kinit admin
  #               ipa host-add --force --ip-address=10.102.81.251 tst-pochdptools.pochdp.csi.it
  #               ipa service-add lgioppo/tst-pochdptools.pochdp.csi.it@POCHDP.CSI.IT
-                mkdir /etc/security/keytabs
+ #              mkdir /etc/security/keytabs
  #               ipa-getkeytab -s tst-kerb1.pochdp.csi.it -p hive/$HOSTNAME_FQDN@POCHDP.CSI.IT -k /etc/security/keytabs/hive.service.keytab
 
                 cp /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini.template /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini
