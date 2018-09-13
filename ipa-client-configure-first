@@ -119,8 +119,8 @@ if [ -z "$1" -o "$1" != "-s" ] ; then
                 echo "Checking alternatives"
                 alternatives --list
                 echo "Checking java"
-                ls -lat /opt/jdk1.8.0_172/bin
-                ls -lat /opt/jdk1.8.0_172/jre/bin
+                ls -lat /opt/jdk1.8.0_181/bin
+                ls -lat /opt/jdk1.8.0_181/jre/bin
  #               ln -s "/usr/java/jdk1.8.0_172/bin/"* "/usr/bin/"
                 java -version
                 cd /usr/hdp/2.6.0.3-8/zeppelin
