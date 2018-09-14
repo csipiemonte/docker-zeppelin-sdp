@@ -2,9 +2,6 @@ FROM pietrocannalire/centos-base
 
 MAINTAINER PC & OTHERS
 
-ENV http_proxy http://proxy-srv.csi.it:3128
-ENV https_proxy  http://proxy-srv.csi.it:3128
-
 # Add ipa-client-configure-first and add permissions
 ADD ipa-client-configure-first /usr/sbin/ipa-client-configure-first
 RUN chmod -v +x /usr/sbin/ipa-client-configure-first
