@@ -12,6 +12,6 @@ RUN systemctl enable freeipa-install.service
 
 VOLUME ["/sys/fs/cgroup"]
 
-VOLUME ["/etc/security/keytabs"]
+VOLUME ["/etc/security/keytabs"] 
 
 CMD ["/usr/sbin/init"]
