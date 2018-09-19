@@ -66,9 +66,9 @@ if [ -f /etc/ipa/ca.crt ] ; then
         cd /usr/hdp/2.6.0.3-8/zeppelin
         bin/zeppelin.sh
 else
-	if [ -z "$PASSWORD" ] ; then
-		usage
-	fi
+	#if [ -z "$PASSWORD" ] ; then
+	#	usage
+	#fi
 
 	if [ "$(hostname -f)" == "$(hostname -s)" ] ; then
 		if [ -z "$IPA_PORT_80_TCP_ADDR" ] ; then
@@ -82,10 +82,14 @@ else
 		if ! hostname $HOSTNAME_FQDN ; then
 			echo "Failed to set hostname to [$HOSTNAME_FQDN]" >&2
 			exit 1
+		else 
+			echo $HOSTNAME_FQDN > /etc/hostname
 		fi
+	else
+		echo $HOSTNAME_FQDN > /etc/hostname
 	fi
 
-	/usr/sbin/ipa-client-install $IPA_CLIENT_INSTALL_OPTS  --force --no-nisdomain -p admin -w "$PASSWORD" -U -v  --mkhomedir --realm=POCHDP.CSI.IT --domain=pochdp.csi.it --server=tst-kerb1.pochdp.csi.it  --enable-dns-updates < /dev/null
+	/usr/sbin/ipa-client-install $IPA_CLIENT_INSTALL_OPTS --force --no-nisdomain -p admin -w "$PASSWORD" -U -v  --mkhomedir --realm=POCHDP.CSI.IT --domain=pochdp.csi.it --server=tst-kerb1.pochdp.csi.it  --enable-dns-updates < /dev/null
 	cp -f /etc/hostname /etc/hostname.ipa-client
 	echo "FreeIPA-enrolled."
 fi
