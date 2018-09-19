@@ -5,9 +5,9 @@ MAINTAINER PC & OTHERS
 #ENV http_proxy http://proxy-srv.csi.it:3128
 #ENV https_proxy  http://proxy-srv.csi.it:3128
 
-ARG container-hostname=zeppelin_docker_hostname 
-ENV env_container-hostname=$container-hostname
-RUN hostname $env_container-hostname
+#ARG container_hostname=zeppelin_docker_hostname 
+#ENV env_container_hostname=$container_hostname
+RUN /bin/hostname pietrozep6.pochdp.csi.it
 
 # Add ipa-client-configure-first and add permissions
 ADD ipa-client-configure-first /usr/sbin/ipa-client-configure-first
