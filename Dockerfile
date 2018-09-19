@@ -7,7 +7,7 @@ MAINTAINER PC & OTHERS
 
 ENV container-hostname $HOSTNAME
 
-RUN hostname container-hostname
+RUN hostname $container-hostname
 
 # Add ipa-client-configure-first and add permissions
 ADD ipa-client-configure-first /usr/sbin/ipa-client-configure-first
