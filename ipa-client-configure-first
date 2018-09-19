@@ -80,13 +80,10 @@ else
 		HOSTNAME_FQDN=$( hostname ).$DOMAIN
 		HOSTNAME_OPTS=--hostname=$HOSTNAME_FQDN
 		if ! hostname $HOSTNAME_FQDN ; then
+			# This will always fail if the container is not run as privileged
 			echo "Failed to set hostname to [$HOSTNAME_FQDN]" >&2
 			exit 1
-		else 
-			echo $HOSTNAME_FQDN > /etc/hostname
 		fi
-	else
-		echo $HOSTNAME_FQDN > /etc/hostname
 	fi
 
 	/usr/sbin/ipa-client-install $IPA_CLIENT_INSTALL_OPTS --force --no-nisdomain -p admin -w "$PASSWORD" -U -v  --mkhomedir --realm=POCHDP.CSI.IT --domain=pochdp.csi.it --server=tst-kerb1.pochdp.csi.it  --enable-dns-updates < /dev/null
