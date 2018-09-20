@@ -16,6 +16,12 @@
 
 set -e
 
+#inherit init (PID=1) variables
+
+for e in $(tr "\000" "\n" < /proc/1/environ); do
+        eval "export $e"
+done
+
 function usage () {
 	if [ -n "$1" ] ; then
 		echo $1 >&2
@@ -29,13 +35,13 @@ function usage () {
 function stop_running () {
         echo "trying to stop"
 	systemctl stop sssd
-# here we need to get the PID of the java process and send a sigterm also to it
+
+	# here we need to get the PID of the java process and send a sigterm also to it
 }
 trap stop_running SIGTERM
 
-#systemctl stop dbus.service
 rm -rf /var/run/*.pid
-#rm -f /run/systemctl-lite-running/*
+
 
 if [ -n "$IPA_PORT_53_UDP_ADDR" ] ; then
 	echo "nameserver $IPA_PORT_53_UDP_ADDR" > /etc/resolv.conf
@@ -53,72 +59,59 @@ if [ -f /etc/ipa/ca.crt ] ; then
 		fi
 	fi
 	echo "System is already FreeIPA-enrolled, starting the services."
-	systemctl start-enabled
 	echo "System is ready."
-        cd /usr/hdp/2.6.0.3-8/zeppelin
-        bin/zeppelin.sh
+    cd /usr/hdp/2.6.0.3-8/zeppelin
+    bin/zeppelin.sh
 else
-	if [ -z "$PASSWORD" ] ; then
-		usage
-	fi
-
-	if [ "$(hostname -f)" == "$(hostname -s)" ] ; then
-		if [ -z "$IPA_PORT_80_TCP_ADDR" ] ; then
-			echo "Hostname [$(hostname -f)] is not FQDN and no --link to IPA server specified." >&2
-			exit 2
-		fi
+	#if [ "$(hostname -f)" == "$(hostname -s)" ] ; then
+		#if [ -z "$IPA_PORT_80_TCP_ADDR" ] ; then
+		#	echo "Hostname [$(hostname -f)] is not FQDN and no --link to IPA server specified." >&2
+		#	exit 2
+		#fi
 		IPA=$( curl -si http://$IPA_PORT_80_TCP_ADDR/ | perl -lne 'm!^Location:\shttps?://(.+?)/! and print $1' )
-		DOMAIN=${IPA#*.}
-		HOSTNAME_FQDN=$( hostname ).$DOMAIN
+		IPASERVERDOMAIN=${IPA#*.}
+		HOSTNAME_FQDN=$( hostname ).$IPASERVERDOMAIN
 		HOSTNAME_OPTS=--hostname=$HOSTNAME_FQDN
+		# This will always fail if the container is not run as privileged
 		if ! hostname $HOSTNAME_FQDN ; then
 			echo "Failed to set hostname to [$HOSTNAME_FQDN]" >&2
 			exit 1
 		fi
-	fi
+		echo "Hostname set to $HOSTNAME_FQDN"
+	#fi
 
-	/usr/sbin/ipa-client-install $IPA_CLIENT_INSTALL_OPTS $HOSTNAME_OPTS -p admin -w "$PASSWORD" -U -v --domain=pochdp.csi.it --mkhomedir --realm=POCHDP.CSI.IT --server=tst-kerb1.pochdp.csi.it  --enable-dns-updates < /dev/null
+	/usr/sbin/ipa-client-install $IPA_CLIENT_INSTALL_OPTS --force --no-nisdomain -p admin -w "$PASSWORD" -U -v  --mkhomedir --realm=$REALM --domain=$IPASERVERDOMAIN --server=$IPASERVER  --enable-dns-updates < /dev/null
 	cp -f /etc/hostname /etc/hostname.ipa-client
 	echo "FreeIPA-enrolled."
+	
+	sed -i "/^\[sssd\].*/s//enumerate = True\\n\[sssd\]/" /etc/sssd/sssd.conf
+	more /etc/sssd/sssd.conf
+	echo "Restarting SSSD"
+	/usr/bin/systemctl restart sssd
+	echo "Aligning the users"
+	sleep 50
+	getent passwd
+	echo "kiniting admin"
+	echo -n "$PASSWORD" | kinit admin
+
+	cp /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini.template /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini
+	sed -i "/^#ldapRealm =.*/s//ldapRealm = org.apache.zeppelin.realm.LdapGroupRealm/" /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini
+	sed -i "/^#ldapRealm.contextFactory.url.*/s//ldapRealm.contextFactory.url = ldap:\/\/tst-kerb1.pochdp.csi.it:389/" /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini
+	sed -i "/^#ldapRealm.contextFactory.environment\[ldap.searchBase\].*/s//ldapRealm.contextFactory.environment\[ldap.searchBase\] = DC=pochdp,DC=csi,DC=it/" /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini
+	sed -i "/^#ldapRealm.userDnTemplate.*/s//ldapRealm.userDnTemplate = uid={0},CN=users,CN=accounts,DC=pochdp,DC=csi,DC=it/" /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini
+	sed -i "/^JAVA_OPTS+.*/s//JAVA_OPTS+=\" -Dhttps.proxyHost=proxy-srv.csi.it -Dhttps.proxyPort=3128 -Dhttp.proxyHost=proxy-srv.csi.it -Dhttp.proxyPort=3128 -Dzeppelin.log.file=\${ZEPPELIN_LOGFILE}\"/" /usr/hdp/2.6.0.3-8/zeppelin/bin/zeppelin.sh
+	echo "Checking alternatives"
+	alternatives --list
+	echo "Checking java"
+	ls -lat /opt/jdk1.8.0_181/bin
+	ls -lat /opt/jdk1.8.0_181/jre/bin
+	java -version
+	
+	# Set proxy
+	export http_proxy=$PROXY
+	export https_proxy=$PROXY
+
+	cd /usr/hdp/2.6.0.3-8/zeppelin	
+	bin/zeppelin.sh
 fi
-
-if [ -z "$1" -o "$1" != "-s" ] ; then
-	if [ -t 0 ] ; then
-		echo 'Starting interactive shell.'
-		/bin/bash
-	else
-                sed -i "/^\[sssd\].*/s//enumerate = True\\n\[sssd\]/" /etc/sssd/sssd.conf
- #               sed -i "/^ipa_hostname = .*/s//ipa_hostname = $HOSTNAME_FQDN/" /etc/sssd/sssd.conf
-                more /etc/sssd/sssd.conf
-                echo "Restarting SSSD"
-                /usr/bin/systemctl restart sssd
-                echo "Aligning the users"
-                sleep 50
-                getent passwd
-                echo "kiniting admin"
-                echo -n "$PASSWORD" | kinit admin
- #               ipa host-add --force --ip-address=10.102.81.251 tst-pochdptools.pochdp.csi.it
- #               ipa service-add lgioppo/tst-pochdptools.pochdp.csi.it@POCHDP.CSI.IT
-                mkdir /etc/security/keytabs
- #               ipa-getkeytab -s tst-kerb1.pochdp.csi.it -p hive/$HOSTNAME_FQDN@POCHDP.CSI.IT -k /etc/security/keytabs/hive.service.keytab
-
-                cp /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini.template /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini
-                sed -i "/^#ldapRealm =.*/s//ldapRealm = org.apache.zeppelin.realm.LdapGroupRealm/" /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini
-                sed -i "/^#ldapRealm.contextFactory.url.*/s//ldapRealm.contextFactory.url = ldap:\/\/tst-kerb1.pochdp.csi.it:389/" /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini
-                sed -i "/^#ldapRealm.contextFactory.environment\[ldap.searchBase\].*/s//ldapRealm.contextFactory.environment\[ldap.searchBase\] = DC=pochdp,DC=csi,DC=it/" /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini
-                sed -i "/^#ldapRealm.userDnTemplate.*/s//ldapRealm.userDnTemplate = uid={0},CN=users,CN=accounts,DC=pochdp,DC=csi,DC=it/" /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini
-		sed -i "/^JAVA_OPTS+.*/s//JAVA_OPTS+=\" -Dhttps.proxyHost=proxy-srv.csi.it -Dhttps.proxyPort=3128 -Dhttp.proxyHost=proxy-srv.csi.it -Dhttp.proxyPort=3128 -Dzeppelin.log.file=\${ZEPPELIN_LOGFILE}\"/" /usr/hdp/2.6.0.3-8/zeppelin/bin/zeppelin.sh
-                echo "Checking alternatives"
-                alternatives --list
-                echo "Checking java"
-                ls -lat /opt/jdk1.8.0_172/bin
-                ls -lat /opt/jdk1.8.0_172/jre/bin
- #               ln -s "/usr/java/jdk1.8.0_172/bin/"* "/usr/bin/"
-                java -version
-                cd /usr/hdp/2.6.0.3-8/zeppelin
-                bin/zeppelin.sh
-#                echo 'Go loop.'
-#		while true ; do sleep 1000 & wait $! ; done
-	fi
-fi
-
+	
