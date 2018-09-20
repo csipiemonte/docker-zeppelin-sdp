@@ -35,11 +35,13 @@ function usage () {
 function stop_running () {
         echo "trying to stop"
 	systemctl stop sssd
+
 	# here we need to get the PID of the java process and send a sigterm also to it
 }
 trap stop_running SIGTERM
 
 rm -rf /var/run/*.pid
+
 
 if [ -n "$IPA_PORT_53_UDP_ADDR" ] ; then
 	echo "nameserver $IPA_PORT_53_UDP_ADDR" > /etc/resolv.conf
