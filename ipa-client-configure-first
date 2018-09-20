@@ -22,8 +22,6 @@ for e in $(tr "\000" "\n" < /proc/1/environ); do
         eval "export $e"
 done
 
-
-
 function usage () {
 	if [ -n "$1" ] ; then
 		echo $1 >&2
@@ -42,6 +40,10 @@ function stop_running () {
 trap stop_running SIGTERM
 
 rm -rf /var/run/*.pid
+
+# Set proxy
+export http_proxy=$PROXY
+export https_proxy=$PROXY
 
 if [ -n "$IPA_PORT_53_UDP_ADDR" ] ; then
 	echo "nameserver $IPA_PORT_53_UDP_ADDR" > /etc/resolv.conf
