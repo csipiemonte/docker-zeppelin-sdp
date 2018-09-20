@@ -71,7 +71,7 @@ else
 		HOSTNAME_FQDN=$( hostname ).$IPASERVERDOMAIN
 		HOSTNAME_OPTS=--hostname=$HOSTNAME_FQDN
 		# This will always fail if the container is not run as privileged
-		if ! hostname $HOSTNAME_FQDN ; then
+		if ! hostnamectl set-hostname $HOSTNAME_FQDN ; then
 			echo "Failed to set hostname to [$HOSTNAME_FQDN]" >&2
 			exit 1
 		fi
