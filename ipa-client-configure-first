@@ -41,10 +41,6 @@ trap stop_running SIGTERM
 
 rm -rf /var/run/*.pid
 
-# Set proxy
-export http_proxy=$PROXY
-export https_proxy=$PROXY
-
 if [ -n "$IPA_PORT_53_UDP_ADDR" ] ; then
 	echo "nameserver $IPA_PORT_53_UDP_ADDR" > /etc/resolv.conf
 fi
@@ -108,6 +104,11 @@ else
 	ls -lat /opt/jdk1.8.0_181/bin
 	ls -lat /opt/jdk1.8.0_181/jre/bin
 	java -version
+	
+	# Set proxy
+	export http_proxy=$PROXY
+	export https_proxy=$PROXY
+
 	cd /usr/hdp/2.6.0.3-8/zeppelin	
 	bin/zeppelin.sh
 fi
