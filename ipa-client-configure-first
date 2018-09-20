@@ -71,8 +71,8 @@ else
 		#	exit 2
 		#fi
 		IPA=$( curl -si http://$IPA_PORT_80_TCP_ADDR/ | perl -lne 'm!^Location:\shttps?://(.+?)/! and print $1' )
-		DOMAIN=${IPA#*.}
-		HOSTNAME_FQDN=$( hostname ).$DOMAIN
+		IPASERVERDOMAIN=${IPA#*.}
+		HOSTNAME_FQDN=$( hostname ).$IPASERVERDOMAIN
 		HOSTNAME_OPTS=--hostname=$HOSTNAME_FQDN
 		# This will always fail if the container is not run as privileged
 		if ! hostname $HOSTNAME_FQDN ; then
@@ -82,7 +82,7 @@ else
 		echo "Hostname set to $HOSTNAME_FQDN"
 	#fi
 
-	/usr/sbin/ipa-client-install $IPA_CLIENT_INSTALL_OPTS --force --no-nisdomain -p admin -w "$PASSWORD" -U -v  --mkhomedir --realm=$REALM --domain=$DOMAIN --server=$IPASERVER  --enable-dns-updates < /dev/null
+	/usr/sbin/ipa-client-install $IPA_CLIENT_INSTALL_OPTS --force --no-nisdomain -p admin -w "$PASSWORD" -U -v  --mkhomedir --realm=$REALM --domain=$IPASERVERDOMAIN --server=$IPASERVER  --enable-dns-updates < /dev/null
 	cp -f /etc/hostname /etc/hostname.ipa-client
 	echo "FreeIPA-enrolled."
 	
