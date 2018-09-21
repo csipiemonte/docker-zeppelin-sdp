@@ -72,8 +72,8 @@ else
 	# Replace last
 	rancher_host_entry=$(tail -n 1 /etc/hosts | head -n1 | awk '{print $2;}')
 	head -n -1 /etc/hosts > /etc/hosts.tmp
-	echo "$(hostname -I) $(hostname).$IPASERVERDOMAIN $(hostname) $rancher_host_entry" >> /etc/hosts.tmp	
-	cat /etc/hosts.tmp /etc/hosts
+	echo "$(hostname -I) $(hostname).$IPASERVERDOMAIN $(hostname) $rancher_host_entry" >> /etc/hosts.tmp
+	cat /etc/hosts.tmp > /etc/hosts
 	echo "/etc/hosts updated..."
 
 	/usr/sbin/ipa-client-install $IPA_CLIENT_INSTALL_OPTS --force --no-nisdomain -p admin -w "$PASSWORD" -U -v  --mkhomedir --realm=$REALM --domain=$IPASERVERDOMAIN --server=$IPASERVER  --enable-dns-updates < /dev/null
