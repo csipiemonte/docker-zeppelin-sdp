@@ -105,6 +105,9 @@ else
 	# Set proxy
 	export http_proxy=$PROXY
 	export https_proxy=$PROXY
+	
+	# cp keytab
+	cp /etc/krb5.keytab /etc/security/keytabs/krb5.keytab
 
 	cd /usr/hdp/2.6.0.3-8/zeppelin	
 	bin/zeppelin.sh
