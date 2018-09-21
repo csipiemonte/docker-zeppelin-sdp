@@ -68,10 +68,12 @@ else
 	IPASERVERDOMAIN=${IPA#*.}
 	HOSTNAME_FQDN=$( hostname ).$IPASERVERDOMAIN
 	HOSTNAME_OPTS=--hostname=$HOSTNAME_FQDN
-		
-	sed -i '$ d' /etc/hosts
-	#head -n -1 /etc/hosts > hosts.temp ; mv hosts.temp /etc/hosts
-	echo "$(hostname -I)	$(hostname).$IPASERVERDOMAIN	$(hostname)" >> /etc/hosts
+	
+	# Replace last
+	rancher-host-entry=$(tail -n 1 /etc/hosts | head -n1 | awk '{print $2;}')
+	head -n -1 /etc/hosts > /etc/hosts.tmp
+	echo "$(hostname -I) $(hostname).$IPASERVERDOMAIN $(hostname) $rancher-host-entry" >> /etc/hosts.tmp	
+	cat /etc/hosts.tmp /etc/hosts
 	echo "/etc/hosts updated..."
 
 	/usr/sbin/ipa-client-install $IPA_CLIENT_INSTALL_OPTS --force --no-nisdomain -p admin -w "$PASSWORD" -U -v  --mkhomedir --realm=$REALM --domain=$IPASERVERDOMAIN --server=$IPASERVER  --enable-dns-updates < /dev/null
