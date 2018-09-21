@@ -69,6 +69,8 @@ else
 	HOSTNAME_FQDN=$( hostname ).$IPASERVERDOMAIN
 	HOSTNAME_OPTS=--hostname=$HOSTNAME_FQDN
 		
+	sed -i '$ d' /etc/hosts
+	#head -n -1 /etc/hosts > hosts.temp ; mv hosts.temp /etc/hosts
 	echo "$(hostname -I)	$(hostname).$IPASERVERDOMAIN	$(hostname)" >> /etc/hosts
 	echo "/etc/hosts updated..."
 
