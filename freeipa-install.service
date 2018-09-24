@@ -1,8 +1,9 @@
 [Unit]
-Description = configure freeipa
+Description = Configure FreeIPA
 After = network.target
 [Service]
 ExecStart = /usr/sbin/ipa-client-configure-first
+ExecStop = /usr/sbin/ipa-client-stop
 User = root
 [Install]
 WantedBy = multi-user.target

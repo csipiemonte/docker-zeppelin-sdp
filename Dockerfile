@@ -6,6 +6,10 @@ MAINTAINER PC & OTHERS
 ADD ipa-client-configure-first /usr/sbin/ipa-client-configure-first
 RUN chmod -v +x /usr/sbin/ipa-client-configure-first
 
+# Add ipa-client-stop and add permissions
+ADD ipa-client-stop /usr/sbin/ipa-client-stop
+RUN chmod -v +x /usr/sbin/ipa-client-stop
+
 # Add freeipa-install.service and enable it via systemctl
 ADD freeipa-install.service /etc/systemd/system/freeipa-install.service
 RUN systemctl enable freeipa-install.service
