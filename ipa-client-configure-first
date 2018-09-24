@@ -89,12 +89,20 @@ else
 	echo "kiniting admin"
 	echo -n "$PASSWORD" | kinit admin
 
+	# $DOMAIN is in the form of "domain.organization.com (DC1.DC2.DC3)"
+	DC1=$(cut -d'.' -f1 <<<"$DOMAIN")
+	DC2=$(cut -d'.' -f2 <<<"$DOMAIN")
+	DC3=$(cut -d'.' -f3 <<<"$DOMAIN")
+	# $PROXY is in the form of "http[s]://PROXYHOST:PROXYPORT"
+	PROXYHOST=$(cut -d'/' -f3 <<<$(cut -d':' -f2 <<<"$PROXY"))
+	PROXYPORT=$(cut -d':' -f3 <<<$PROXY)
+	
 	cp /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini.template /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini
 	sed -i "/^#ldapRealm =.*/s//ldapRealm = org.apache.zeppelin.realm.LdapGroupRealm/" /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini
 	sed -i "/^#ldapRealm.contextFactory.url.*/s//ldapRealm.contextFactory.url = ldap:\/\/$IPASERVER:389/" /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini
-	sed -i "/^#ldapRealm.contextFactory.environment\[ldap.searchBase\].*/s//ldapRealm.contextFactory.environment\[ldap.searchBase\] = DC=$(cut -d'.' -f1 <<<"$DOMAIN"),DC=$(cut -d'.' -f2 <<<"$DOMAIN"),DC=$(cut -d'.' -f3 <<<"$DOMAIN")/" /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini
-	sed -i "/^#ldapRealm.userDnTemplate.*/s//ldapRealm.userDnTemplate = uid={0},CN=users,CN=accounts,DC=$(cut -d'.' -f1 <<<"$DOMAIN"),DC=$(cut -d'.' -f2 <<<"$DOMAIN"),DC=$(cut -d'.' -f3 <<<"$DOMAIN")/" /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini
-	sed -i "/^JAVA_OPTS+.*/s//JAVA_OPTS+=\" -Dhttps.proxyHost=$(cut -d'/' -f3 <<<$(cut -d':' -f2 <<<"$PROXY")) -Dhttps.proxyPort=$(cut -d':' -f3 <<<$PROXY) -Dhttp.proxyHost=$(cut -d'/' -f3 <<<$(cut -d':' -f2 <<<"$PROXY")) -Dhttp.proxyPort=$(cut -d':' -f3 <<<$PROXY) -Dzeppelin.log.file=\${ZEPPELIN_LOGFILE}\"/" /usr/hdp/2.6.0.3-8/zeppelin/bin/zeppelin.sh
+	sed -i "/^#ldapRealm.contextFactory.environment\[ldap.searchBase\].*/s//ldapRealm.contextFactory.environment\[ldap.searchBase\] = DC=$DC1,DC=$DC2,DC=$DC3/" /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini
+	sed -i "/^#ldapRealm.userDnTemplate.*/s//ldapRealm.userDnTemplate = uid={0},CN=users,CN=accounts,DC=$DC1,DC=$DC2,DC=$DC3/" /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini
+	sed -i "/^JAVA_OPTS+.*/s//JAVA_OPTS+=\" -Dhttps.proxyHost=$PROXYHOST -Dhttps.proxyPort=$PROXYPORT -Dhttp.proxyHost=$PROXYHOST -Dhttp.proxyPort=$PROXYPORT -Dzeppelin.log.file=\${ZEPPELIN_LOGFILE}\"/" /usr/hdp/2.6.0.3-8/zeppelin/bin/zeppelin.sh
 	echo "Checking alternatives"
 	alternatives --list
 	echo "Checking java"
@@ -106,9 +114,6 @@ else
 	export http_proxy=$PROXY
 	export https_proxy=$PROXY
 	
-	# cp keytab
-	cp /etc/krb5.keytab /etc/security/keytabs/krb5.keytab
-
 	cd /usr/hdp/2.6.0.3-8/zeppelin	
 	bin/zeppelin.sh
 fi
