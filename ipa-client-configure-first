@@ -74,6 +74,7 @@ else
 	echo "$(hostname -I) $(hostname).$IPASERVERDOMAIN $(hostname) $rancher_host_entry" >> /etc/hosts.tmp
 	cat /etc/hosts.tmp > /etc/hosts
 	echo "/etc/hosts updated..."
+	echo "$HOSTNAME_FQDN" > /etc/hostname
 
 	/usr/sbin/ipa-client-install $IPA_CLIENT_INSTALL_OPTS --force --no-nisdomain -p admin -w "$PASSWORD" -U -v  --mkhomedir --realm=$REALM --domain=$IPASERVERDOMAIN --server=$IPASERVER  --enable-dns-updates < /dev/null
 	cp -f /etc/hostname /etc/hostname.ipa-client
