@@ -22,19 +22,9 @@ for e in $(tr "\000" "\n" < /proc/1/environ); do
         eval "export $e"
 done
 
-function usage () {
-	if [ -n "$1" ] ; then
-		echo $1 >&2
-	else
-		echo "Start as docker run -e PASSWORD=\$THE_ADMIN_PASSWORD image" >&2
-		echo "    with -h <the-FQDN-hostname> and possibly --link <FreeIPA-container>:ipa" >&2
-	fi
-	exit 1
-}
-
 function stop_running () {
-        echo "trying to stop"
-	systemctl stop sssd
+    echo "trying to stop"
+	#systemctl stop sssd
 
 	# here we need to get the PID of the java process and send a sigterm also to it
 }
@@ -47,30 +37,18 @@ if [ -n "$IPA_PORT_53_UDP_ADDR" ] ; then
 fi
 
 if [ -f /etc/ipa/ca.crt ] ; then
-	sed -i "/^\[sssd\].*/s//enumerate = True\\n\[sssd\]/" /etc/sssd/sssd.conf
-	cat /etc/sssd/sssd.conf
-	echo "Restarting SSSD"
-	/usr/bin/systemctl restart sssd
 	
-	HOSTNAME_IPA=$(cat /etc/hostname.ipa-client)
-	if [ ! "$HOSTNAME_IPA" == "$(hostname -f)" ] ; then
-        IPA=$( curl -si http://$IPA_PORT_80_TCP_ADDR/ | perl -lne 'm!^Location:\shttps?://(.+?)/! and print $1' )
+	if [ -f /etc/hostname.ipa-client ] ; then
+		HOSTNAME_IPA=$(cat /etc/hostname.ipa-client)
+	else
+		IPA=$( curl -si http://$IPASERVER/ | perl -lne 'm!^Location:\shttps?://(.+?)/! and print $1' )
 		IPASERVERDOMAIN=${IPA#*.}
-		HOSTNAME_FQDN=$( hostname ).$IPASERVERDOMAIN
-		HOSTNAME_OPTS=--hostname=$HOSTNAME_FQDN
-		
-		# Replace last line in /etc/hosts
-		rancher_host_entry=$(tail -n 1 /etc/hosts | head -n1 | awk '{print $2;}')
-		head -n -1 /etc/hosts > /etc/hosts.tmp
-		echo "$(hostname -I) $(hostname).$IPASERVERDOMAIN $(hostname) $rancher_host_entry" >> /etc/hosts.tmp
-		cat /etc/hosts.tmp > /etc/hosts
-		echo "/etc/hosts updated..."
-		
-		echo "$HOSTNAME_FQDN" > /etc/hostname
+		HOSTNAME_IPA=$( hostname ).$IPASERVERDOMAIN
+		echo "$HOSTNAME_IPA" > /etc/hostname.ipa-client
 	fi
 	
     # Check if the value of Keytab in the 'ipa host-show' is True: the client is already enrolled.
-    if [ "$(cut -d':' -f2 <<< $(ipa host-show $HOSTNAME_IPA | sed -n -e '/^\s*Keytab:/p'))" === "True" ] ; then
+    if [ "$(cut -d':' -f2 <<< $(ipa host-show $HOSTNAME_IPA | sed -n -e '/^\s*Keytab:/p'))" == "True" ] ; then
 		echo "System is already FreeIPA-enrolled, starting the services."
     else
 		echo "Re-enrolling..."
@@ -79,12 +57,18 @@ if [ -f /etc/ipa/ca.crt ] ; then
 	
 	echo "System is ready."
 	
+	# Set proxy
+	export http_proxy=$PROXY
+	export https_proxy=$PROXY
+	
     cd /usr/hdp/2.6.0.3-8/zeppelin
+	echo "Starting Zeppelin"
     bin/zeppelin.sh &
+	echo "Storing Zeppelin PID to /var/run/zeppelin/zeppelin.pid"
 	echo $! > /var/run/zeppelin/zeppelin.pid
 else
 
-	IPA=$( curl -si http://$IPA_PORT_80_TCP_ADDR/ | perl -lne 'm!^Location:\shttps?://(.+?)/! and print $1' )
+	IPA=$( curl -si http://$IPASERVER/ | perl -lne 'm!^Location:\shttps?://(.+?)/! and print $1' )
 	IPASERVERDOMAIN=${IPA#*.}
 	HOSTNAME_FQDN=$( hostname ).$IPASERVERDOMAIN
 	HOSTNAME_OPTS=--hostname=$HOSTNAME_FQDN
@@ -125,6 +109,7 @@ else
 	sed -i "/^#ldapRealm.contextFactory.environment\[ldap.searchBase\].*/s//ldapRealm.contextFactory.environment\[ldap.searchBase\] = DC=$DC1,DC=$DC2,DC=$DC3/" /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini
 	sed -i "/^#ldapRealm.userDnTemplate.*/s//ldapRealm.userDnTemplate = uid={0},CN=users,CN=accounts,DC=$DC1,DC=$DC2,DC=$DC3/" /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini
 	sed -i "/^JAVA_OPTS+.*/s//JAVA_OPTS+=\" -Dhttps.proxyHost=$PROXYHOST -Dhttps.proxyPort=$PROXYPORT -Dhttp.proxyHost=$PROXYHOST -Dhttp.proxyPort=$PROXYPORT -Dzeppelin.log.file=\${ZEPPELIN_LOGFILE}\"/" /usr/hdp/2.6.0.3-8/zeppelin/bin/zeppelin.sh
+	
 	echo "Checking alternatives"
 	alternatives --list
 	echo "Checking java"
@@ -132,12 +117,10 @@ else
 	ls -lat /opt/jdk1.8.0_181/jre/bin
 	java -version
 	
-	# Set proxy
-	export http_proxy=$PROXY
-	export https_proxy=$PROXY
-	
-	cd /usr/hdp/2.6.0.3-8/zeppelin	
-	bin/zeppelin.sh &
+    cd /usr/hdp/2.6.0.3-8/zeppelin
+	echo "Starting Zeppelin"
+    bin/zeppelin.sh &
+	echo "Storing Zeppelin PID to /var/run/zeppelin/zeppelin.pid"
 	echo $! > /var/run/zeppelin/zeppelin.pid
 fi
 	
