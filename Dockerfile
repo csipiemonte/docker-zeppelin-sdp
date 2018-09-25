@@ -3,8 +3,8 @@ FROM pietrocannalire/centos-base:latest
 MAINTAINER PC & OTHERS
 
 # Add ipa-client-configure-first and add permissions
-ADD ipa-client-configure-first /usr/sbin/ipa-client-configure-first
-RUN chmod -v +x /usr/sbin/ipa-client-configure-first
+ADD ipa-client-start /usr/sbin/ipa-client-start
+RUN chmod -v +x /usr/sbin/ipa-client-start
 
 # Add ipa-client-stop and add permissions
 ADD ipa-client-stop /usr/sbin/ipa-client-stop
