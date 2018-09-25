@@ -22,33 +22,24 @@ for e in $(tr "\000" "\n" < /proc/1/environ); do
         eval "export $e"
 done
 
+rm -rf /var/run/*.pid
+
 if [ -f /etc/ipa/ca.crt ] ; then
-	HOSTNAME_IPA=$(cat /etc/hostname.ipa-client)
-	if [ ! "$HOSTNAME_IPA" == "$(hostname -f)" ] ; then
-                echo "The container hostname is $(hostname -f) and is different from $HOSTNAME_IPA; this container is already registered with a different hostname use the correct -h value option." >&2
-		if hostname $HOSTNAME_IPA ; then
-			echo "Hostname set to $HOSTNAME_IPA"
-		else
-			echo "The container hostname is $(hostname -f) and cannot set $HOSTNAME_IPA; run with -h." >&2
-			exit 1
-		fi
-	fi
-	echo "System is FreeIPA-enrolled, starting the unenrollement..."
-		
+	echo "System is FreeIPA-enrolled, starting the unenrollement..."	
+	
 	IPA=$( curl -si http://$IPA_PORT_80_TCP_ADDR/ | perl -lne 'm!^Location:\shttps?://(.+?)/! and print $1' )
 	IPASERVERDOMAIN=${IPA#*.}
-	HOSTNAME_FQDN=$( hostname ).$IPASERVERDOMAIN
-	HOSTNAME_OPTS=--hostname=$HOSTNAME_FQDN
-	
+	HOSTNAME_IPA=$( hostname ).$IPASERVERDOMAIN	
+			
 	# $DOMAIN is in the form of "domain.organization.com (DC1.DC2.DC3)"
 	DC1=$(cut -d'.' -f1 <<<"$DOMAIN")
 	DC2=$(cut -d'.' -f2 <<<"$DOMAIN")
 	DC3=$(cut -d'.' -f3 <<<"$DOMAIN")
 	
-	/usr/sbin/ipa-join -s $IPASERVER -b dc=$DC1,dc=$DC2,dc=$DC3 -h $HOSTNAME_FQDN --unenroll < /dev/null
-	/usr/sbin/ipa-client-install --uninstall
-	echo "FreeIPA-unenrolled."	
+	echo "Starting unenrollment..."
+	/usr/sbin/ipa-join -s $IPASERVER -b dc=$DC1,dc=$DC2,dc=$DC3 -h $HOSTNAME_IPA --unenroll < /dev/null
+	
 else 
-	echo "The system has not been enrolled to any IPA realm."
+	echo "FreeIPA client is not installed."
 fi
 	
