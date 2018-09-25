@@ -4,6 +4,7 @@ After = network.target
 [Service]
 ExecStart = /usr/sbin/ipa-client-start
 ExecStop = /usr/sbin/ipa-client-stop
+RemainAfterExit=yes
 User = root
 [Install]
 WantedBy = multi-user.target
