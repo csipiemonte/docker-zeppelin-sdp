@@ -37,12 +37,12 @@ if [ -n "$IPA_PORT_53_UDP_ADDR" ] ; then
 fi
 
 if [ -f /etc/ipa/ca.crt ] ; then
-	
+			
+	IPA=$( curl -si http://$IPASERVER/ | perl -lne 'm!^Location:\shttps?://(.+?)/! and print $1' )
+	IPASERVERDOMAIN=${IPA#*.}
 	if [ -f /etc/hostname.ipa-client ] ; then
 		HOSTNAME_IPA=$(cat /etc/hostname.ipa-client)
 	else
-		IPA=$( curl -si http://$IPASERVER/ | perl -lne 'm!^Location:\shttps?://(.+?)/! and print $1' )
-		IPASERVERDOMAIN=${IPA#*.}
 		HOSTNAME_IPA=$( hostname ).$IPASERVERDOMAIN
 		echo "$HOSTNAME_IPA" > /etc/hostname.ipa-client
 	fi
@@ -52,7 +52,12 @@ if [ -f /etc/ipa/ca.crt ] ; then
 		echo "System is already FreeIPA-enrolled, starting the services."
     else
 		echo "Re-enrolling..."
-        ipa-join -h $HOSTNAME_IPA       # API v2
+		echo "kiniting admin"
+		echo -n "$PASSWORD" | kinit admin
+	
+        /usr/sbin/ipa-join -h $HOSTNAME_IPA -s $IPASERVER      # API v2
+		#/usr/sbin/ipa-client-install $IPA_CLIENT_INSTALL_OPTS --force --no-nisdomain -p admin -w "$PASSWORD" -U -v  --mkhomedir --realm=$REALM --domain=$IPASERVERDOMAIN --server=$IPASERVER  --keytab /etc/krb5.keytab --enable-dns-updates < /dev/null
+		echo "FreeIPA Re-enrolled"
     fi
 	
 	echo "System is ready."
@@ -66,6 +71,7 @@ if [ -f /etc/ipa/ca.crt ] ; then
     bin/zeppelin.sh &
 	echo "Storing Zeppelin PID to /var/run/zeppelin/zeppelin.pid"
 	echo $! > /var/run/zeppelin/zeppelin.pid
+	
 else
 
 	IPA=$( curl -si http://$IPASERVER/ | perl -lne 'm!^Location:\shttps?://(.+?)/! and print $1' )
