@@ -2,7 +2,7 @@
 Description = Configure FreeIPA
 After = network.target
 [Service]
-ExecStart = /usr/sbin/ipa-client-configure-first
+ExecStart = /usr/sbin/ipa-client-start
 ExecStop = /usr/sbin/ipa-client-stop
 User = root
 [Install]

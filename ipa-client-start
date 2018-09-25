@@ -47,20 +47,41 @@ if [ -n "$IPA_PORT_53_UDP_ADDR" ] ; then
 fi
 
 if [ -f /etc/ipa/ca.crt ] ; then
+	sed -i "/^\[sssd\].*/s//enumerate = True\\n\[sssd\]/" /etc/sssd/sssd.conf
+	cat /etc/sssd/sssd.conf
+	echo "Restarting SSSD"
+	/usr/bin/systemctl restart sssd
+	
 	HOSTNAME_IPA=$(cat /etc/hostname.ipa-client)
 	if [ ! "$HOSTNAME_IPA" == "$(hostname -f)" ] ; then
-                echo "The container hostname is $(hostname -f) and is different from $HOSTNAME_IPA; this container is already registered with a different hostname use the correct -h value option." >&2
-		if hostname $HOSTNAME_IPA ; then
-			echo "Hostname set to $HOSTNAME_IPA"
-		else
-			echo "The container hostname is $(hostname -f) and cannot set $HOSTNAME_IPA; run with -h." >&2
-			exit 1
-		fi
+        IPA=$( curl -si http://$IPA_PORT_80_TCP_ADDR/ | perl -lne 'm!^Location:\shttps?://(.+?)/! and print $1' )
+		IPASERVERDOMAIN=${IPA#*.}
+		HOSTNAME_FQDN=$( hostname ).$IPASERVERDOMAIN
+		HOSTNAME_OPTS=--hostname=$HOSTNAME_FQDN
+		
+		# Replace last line in /etc/hosts
+		rancher_host_entry=$(tail -n 1 /etc/hosts | head -n1 | awk '{print $2;}')
+		head -n -1 /etc/hosts > /etc/hosts.tmp
+		echo "$(hostname -I) $(hostname).$IPASERVERDOMAIN $(hostname) $rancher_host_entry" >> /etc/hosts.tmp
+		cat /etc/hosts.tmp > /etc/hosts
+		echo "/etc/hosts updated..."
+		
+		echo "$HOSTNAME_FQDN" > /etc/hostname
 	fi
-	echo "System is already FreeIPA-enrolled, starting the services."
+	
+    # Check if the value of Keytab in the 'ipa host-show' is True: the client is already enrolled.
+    if [ "$(cut -d':' -f2 <<< $(ipa host-show $HOSTNAME_IPA | sed -n -e '/^\s*Keytab:/p'))" === "True" ] ; then
+		echo "System is already FreeIPA-enrolled, starting the services."
+    else
+		echo "Re-enrolling..."
+        ipa-join -h $HOSTNAME_IPA       # API v2
+    fi
+	
 	echo "System is ready."
+	
     cd /usr/hdp/2.6.0.3-8/zeppelin
-    bin/zeppelin.sh
+    bin/zeppelin.sh &
+	echo $! > /var/run/zeppelin/zeppelin.pid
 else
 
 	IPA=$( curl -si http://$IPA_PORT_80_TCP_ADDR/ | perl -lne 'm!^Location:\shttps?://(.+?)/! and print $1' )
@@ -81,7 +102,7 @@ else
 	echo "FreeIPA-enrolled."
 	
 	sed -i "/^\[sssd\].*/s//enumerate = True\\n\[sssd\]/" /etc/sssd/sssd.conf
-	more /etc/sssd/sssd.conf
+	cat /etc/sssd/sssd.conf
 	echo "Restarting SSSD"
 	/usr/bin/systemctl restart sssd
 	echo "Aligning the users"
@@ -116,6 +137,7 @@ else
 	export https_proxy=$PROXY
 	
 	cd /usr/hdp/2.6.0.3-8/zeppelin	
-	bin/zeppelin.sh
+	bin/zeppelin.sh &
+	echo $! > /var/run/zeppelin/zeppelin.pid
 fi
 	
