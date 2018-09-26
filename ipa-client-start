@@ -23,10 +23,10 @@ for e in $(tr "\000" "\n" < /proc/1/environ); do
 done
 
 function stop_running () {
-    echo "trying to stop"
+    echo "[ipa-client-start] SIGTERM received"
+	#/usr/bin/ipa-client-stop
+	
 	#systemctl stop sssd
-
-	# here we need to get the PID of the java process and send a sigterm also to it
 }
 trap stop_running SIGTERM
 
@@ -38,9 +38,7 @@ fi
 
 if [ -f /etc/ipa/ca.crt ] ; then
 
-	echo "Restarting SSSD"
-	/usr/bin/systemctl restart sssd
-			
+	# Retrieve HOSTNAME_IPA
 	IPA=$( curl -si http://$IPASERVER/ | perl -lne 'm!^Location:\shttps?://(.+?)/! and print $1' )
 	IPASERVERDOMAIN=${IPA#*.}
 	if [ -f /etc/hostname.ipa-client ] ; then
@@ -52,16 +50,10 @@ if [ -f /etc/ipa/ca.crt ] ; then
 	
     # Check if the value of Keytab in the 'ipa host-show' is True: the client is already enrolled.
     if [ "$(cut -d':' -f2 <<< $(ipa host-show $HOSTNAME_IPA | sed -n -e '/^\s*Keytab:/p'))" == "True" ] ; then
-		echo "System is already FreeIPA-enrolled, starting the services."
+		echo "System is already FreeIPA-enrolled."
     else
 		echo "Re-enrolling..."
-		echo "kiniting admin"
-		echo -n "$PASSWORD" | kinit admin
-		
-		IPA=$( curl -si http://$IPASERVER/ | perl -lne 'm!^Location:\shttps?://(.+?)/! and print $1' )
-		IPASERVERDOMAIN=${IPA#*.}
-        #/usr/sbin/ipa-join -h $HOSTNAME_IPA -s $IPASERVER      # API v2
-		/usr/sbin/ipa-client-install $IPA_CLIENT_INSTALL_OPTS --force --no-nisdomain -p admin -w "$PASSWORD" -U -v  --mkhomedir --realm=$REALM --domain=$IPASERVERDOMAIN --server=$IPASERVER  --enable-dns-updates < /dev/null
+        /usr/sbin/ipa-join -h $HOSTNAME_IPA		# API v2
 		echo "FreeIPA Re-enrolled"
     fi
 	
@@ -74,17 +66,18 @@ if [ -f /etc/ipa/ca.crt ] ; then
     cd /usr/hdp/2.6.0.3-8/zeppelin
 	echo "Starting Zeppelin"
     bin/zeppelin.sh &
-	echo "Storing Zeppelin PID to /var/run/zeppelin/zeppelin.pid"
+	echo "Storing Zeppelin PID [$!] to /var/run/zeppelin/zeppelin.pid"
 	echo $! > /var/run/zeppelin/zeppelin.pid
 	
 else
 
+	# Set hostname for ipa-client-install
 	IPA=$( curl -si http://$IPASERVER/ | perl -lne 'm!^Location:\shttps?://(.+?)/! and print $1' )
 	IPASERVERDOMAIN=${IPA#*.}
 	HOSTNAME_FQDN=$( hostname ).$IPASERVERDOMAIN
 	HOSTNAME_OPTS=--hostname=$HOSTNAME_FQDN
 	
-	# Replace last
+	# Replace last line of /etc/hosts
 	rancher_host_entry=$(tail -n 1 /etc/hosts | head -n1 | awk '{print $2;}')
 	head -n -1 /etc/hosts > /etc/hosts.tmp
 	echo "$(hostname -I) $(hostname).$IPASERVERDOMAIN $(hostname) $rancher_host_entry" >> /etc/hosts.tmp
@@ -131,7 +124,7 @@ else
     cd /usr/hdp/2.6.0.3-8/zeppelin
 	echo "Starting Zeppelin"
     bin/zeppelin.sh &
-	echo "Storing Zeppelin PID to /var/run/zeppelin/zeppelin.pid"
+	echo "Storing Zeppelin PID [$!] to /var/run/zeppelin/zeppelin.pid"
 	echo $! > /var/run/zeppelin/zeppelin.pid
 fi
 	

@@ -16,19 +16,10 @@ if [ -f /etc/ipa/ca.crt ] ; then
 	else
 		IPA=$( curl -si http://$IPASERVER/ | perl -lne 'm!^Location:\shttps?://(.+?)/! and print $1' )
 		IPASERVERDOMAIN=${IPA#*.}
-		HOSTNAME_IPA=$( hostname ).$IPASERVERDOMAIN	
+		HOSTNAME_IPA=$( hostname ).$IPASERVERDOMAIN
 	fi
 	
-	# $DOMAIN is in the form of "domain.organization.com (DC1.DC2.DC3)"
-	DC1=$(cut -d'.' -f1 <<<"$DOMAIN")
-	DC2=$(cut -d'.' -f2 <<<"$DOMAIN")
-	DC3=$(cut -d'.' -f3 <<<"$DOMAIN")
-	
-	echo "kiniting admin"
-	echo -n "$PASSWORD" | kinit admin
-	#/usr/sbin/ipa-join -s $IPASERVER -b dc=$DC1,dc=$DC2,dc=$DC3 -h $HOSTNAME_IPA --unenroll
-	/usr/sbin/ipa-client-install --uninstall
-	
+	ipa-join -h $HOSTNAME_IPA --unenroll
 else 
 	echo "FreeIPA client is not installed."
 fi
