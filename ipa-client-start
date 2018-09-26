@@ -37,6 +37,9 @@ if [ -n "$IPA_PORT_53_UDP_ADDR" ] ; then
 fi
 
 if [ -f /etc/ipa/ca.crt ] ; then
+
+	echo "Restarting SSSD"
+	/usr/bin/systemctl restart sssd
 			
 	IPA=$( curl -si http://$IPASERVER/ | perl -lne 'm!^Location:\shttps?://(.+?)/! and print $1' )
 	IPASERVERDOMAIN=${IPA#*.}
@@ -54,9 +57,11 @@ if [ -f /etc/ipa/ca.crt ] ; then
 		echo "Re-enrolling..."
 		echo "kiniting admin"
 		echo -n "$PASSWORD" | kinit admin
-	
-        /usr/sbin/ipa-join -h $HOSTNAME_IPA -s $IPASERVER      # API v2
-		#/usr/sbin/ipa-client-install $IPA_CLIENT_INSTALL_OPTS --force --no-nisdomain -p admin -w "$PASSWORD" -U -v  --mkhomedir --realm=$REALM --domain=$IPASERVERDOMAIN --server=$IPASERVER  --keytab /etc/krb5.keytab --enable-dns-updates < /dev/null
+		
+		IPA=$( curl -si http://$IPASERVER/ | perl -lne 'm!^Location:\shttps?://(.+?)/! and print $1' )
+		IPASERVERDOMAIN=${IPA#*.}
+        #/usr/sbin/ipa-join -h $HOSTNAME_IPA -s $IPASERVER      # API v2
+		/usr/sbin/ipa-client-install $IPA_CLIENT_INSTALL_OPTS --force --no-nisdomain -p admin -w "$PASSWORD" -U -v  --mkhomedir --realm=$REALM --domain=$IPASERVERDOMAIN --server=$IPASERVER  --enable-dns-updates < /dev/null
 		echo "FreeIPA Re-enrolled"
     fi
 	

@@ -1,12 +1,5 @@
 #!/bin/bash
 
-set -e
-
-#inherit init (PID=1) variables
-for e in $(tr "\000" "\n" < /proc/1/environ); do
-        eval "export $e"
-done
-
 rm -rf /var/run/*.pid
 
 # Kill Zeppelin process and remove .pid file
@@ -33,7 +26,8 @@ if [ -f /etc/ipa/ca.crt ] ; then
 	
 	echo "kiniting admin"
 	echo -n "$PASSWORD" | kinit admin
-	/usr/sbin/ipa-join -s $IPASERVER -b dc=$DC1,dc=$DC2,dc=$DC3 -h $HOSTNAME_IPA --unenroll
+	#/usr/sbin/ipa-join -s $IPASERVER -b dc=$DC1,dc=$DC2,dc=$DC3 -h $HOSTNAME_IPA --unenroll
+	/usr/sbin/ipa-client-install --uninstall
 	
 else 
 	echo "FreeIPA client is not installed."
