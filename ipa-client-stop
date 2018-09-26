@@ -20,6 +20,7 @@ if [ -f /etc/ipa/ca.crt ] ; then
 	fi
 	
 	ipa-join -h $HOSTNAME_IPA --unenroll
+	rm -f /etc/krb5.keytab
 else 
 	echo "FreeIPA client is not installed."
 fi
