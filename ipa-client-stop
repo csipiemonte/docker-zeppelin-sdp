@@ -5,11 +5,13 @@ rm -rf /var/run/*.pid
 # Kill Zeppelin process and remove .pid file
 if [ -f /var/run/zeppelin/zeppelin.pid ] ; then
 	kill -9 $(cat /var/run/zeppelin/zeppelin.pid)
+	echo "Zeppelin stopped"
 	rm -f /var/run/zeppelin/zeppelin.pid
 fi
 
 if [ -f /etc/ipa/ca.crt ] ; then
-	echo "FreeIPA client is installed. Starting the unenrollement..."
+	echo "FreeIPA client is installed"
+	echo "Starting the unenrollement"
 	
 	if [ -f /etc/hostname.ipa-client ] ; then
 		HOSTNAME_IPA=$(cat /etc/hostname.ipa-client)
