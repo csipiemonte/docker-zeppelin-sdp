@@ -24,7 +24,7 @@ done
 
 function stop_running () {
     echo "[ipa-client-start] SIGTERM received"
-	#/usr/bin/ipa-client-stop
+	#/usr/sbin/ipa-client-stop
 	
 	#systemctl stop sssd
 }
@@ -78,7 +78,7 @@ else
 	HOSTNAME_OPTS=--hostname=$HOSTNAME_FQDN
 	
 	# Try to restore a previous IPA client installation
-	/usr/bin/restore.sh
+	/usr/sbin/restore-freeipa-files.sh
 	if [ -f /etc/ipa/ca.crt ] ; then
 		if [ -n $(ipa host-show $HOSTNAME_FQDN | sed -n -e '/^\s*ipa:/p') ] ; then
 			echo "Host $HOSTNAME_FQDN checked and exists on IPA server"
@@ -134,6 +134,9 @@ else
 		ls -lat /opt/jdk1.8.0_181/bin
 		ls -lat /opt/jdk1.8.0_181/jre/bin
 		java -version
+		
+		echo "Storing ipa-client installation config"
+		/usr/sbin/backup-freeipa-files.sh
 	fi
 	
     cd /usr/hdp/2.6.0.3-8/zeppelin
