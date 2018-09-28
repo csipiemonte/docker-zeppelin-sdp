@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo "Restoring previous FreeIPA client config"
+
 if [ -n "$1" ] ; then
 	if [ -d "$1" ] ; then
 		sourceRootDir="$1"

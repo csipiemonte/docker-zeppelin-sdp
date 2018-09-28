@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#default: /etc/security/keytabs/freeipa-backup
+echo "Backup current FreeIPA client config"
 
 if [ -n "$1" ] ; then
 	destRootDir="$1"

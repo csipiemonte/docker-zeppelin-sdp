@@ -13,6 +13,8 @@ RUN chmod -v +x /usr/sbin/ipa-client-start /usr/sbin/ipa-client-stop /usr/sbin/b
 ADD freeipa-install.service /etc/systemd/system/freeipa-install.service
 RUN systemctl enable freeipa-install.service
 
+STOPSIGNAL SIGRTMIN+3
+
 VOLUME ["/etc/security/keytabs"] 
 
 CMD ["/usr/sbin/init"]
