@@ -5,7 +5,7 @@ echo "Backup current FreeIPA client config"
 if [ -n "$1" ] ; then
 	destRootDir="$1"
 else
-	destRootDir="/etc/security/keytabs/freeipa-backup"
+	destRootDir="/etc/security/freeipa-backups"
 fi
 
 if [ ! -d $destRootDir ] ; then

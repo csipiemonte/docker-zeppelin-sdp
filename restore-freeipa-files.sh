@@ -10,7 +10,7 @@ if [ -n "$1" ] ; then
 		exit 1
 	fi
 else
-	sourceRootDir="/etc/security/keytabs/freeipa-backup"
+	sourceRootDir="/etc/security/freeipa-backups"
 fi
 
 
