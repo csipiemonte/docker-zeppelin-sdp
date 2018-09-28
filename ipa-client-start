@@ -64,10 +64,14 @@ if [ -f /etc/ipa/ca.crt ] ; then
 	export https_proxy=$PROXY
 	
     cd /usr/hdp/2.6.0.3-8/zeppelin
-	echo "Starting Zeppelin"
-    bin/zeppelin.sh &
-	echo "Storing Zeppelin PID [$!] to /var/run/zeppelin/zeppelin.pid"
-	echo $! > /var/run/zeppelin/zeppelin.pid
+	if [ ! -f  /var/run/zeppelin/zeppelin.pid ] ; then
+		echo "Starting Zeppelin"
+		bin/zeppelin.sh &
+		echo "Storing Zeppelin PID [$!] to /var/run/zeppelin/zeppelin.pid"
+		echo $! > /var/run/zeppelin/zeppelin.pid
+	else
+		echo "Zeppelin already running with PID [$(cat /var/run/zeppelin/zeppelin.pid)]"
+	fi
 	
 else
 
@@ -140,9 +144,13 @@ else
 	fi
 	
     cd /usr/hdp/2.6.0.3-8/zeppelin
-	echo "Starting Zeppelin"
-    bin/zeppelin.sh &
-	echo "Storing Zeppelin PID [$!] to /var/run/zeppelin/zeppelin.pid"
-	echo $! > /var/run/zeppelin/zeppelin.pid
+	if [ ! -f  /var/run/zeppelin/zeppelin.pid ] ; then
+		echo "Starting Zeppelin"
+		bin/zeppelin.sh &
+		echo "Storing Zeppelin PID [$!] to /var/run/zeppelin/zeppelin.pid"
+		echo $! > /var/run/zeppelin/zeppelin.pid
+	else
+		echo "Zeppelin already running with PID [$(cat /var/run/zeppelin/zeppelin.pid)]"
+	fi
 fi
 	
