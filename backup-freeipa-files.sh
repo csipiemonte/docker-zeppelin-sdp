@@ -2,10 +2,10 @@
 
 #default: /etc/security/keytabs/freeipa-backup
 
-if [ -n $1 ] ; then
-	destRootDir=$1
+if [ -n "$1" ] ; then
+	destRootDir="$1"
 else
-	destRootDir=/etc/security/keytabs/freeipa-backup
+	destRootDir="/etc/security/keytabs/freeipa-backup"
 fi
 
 if [ ! -d $destRootDir ] ; then

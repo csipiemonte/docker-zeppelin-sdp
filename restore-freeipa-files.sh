@@ -1,14 +1,14 @@
 #!/bin/bash
 
-if [ -n $1 ] ; then
-	if [ -d $1 ] ; then
-		sourceRootDir=$1
+if [ -n "$1" ] ; then
+	if [ -d "$1" ] ; then
+		sourceRootDir="$1"
 	else
 		echo "Directory $1 does not exists"
 		exit 1
 	fi
 else
-	sourceRootDir=/etc/security/keytabs/freeipa-backup
+	sourceRootDir="/etc/security/keytabs/freeipa-backup"
 fi
 
 
