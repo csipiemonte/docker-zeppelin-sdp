@@ -8,7 +8,8 @@ fi
 case "$1" in
 
 	"import" )
-		rootNotebookDir="/var/lib/zeppelin/notebook"
+		sourceNotebookDir="/var/lib/zeppelin/notebook"
+		destNotebookDir="/var/lib/zeppelin/notebook"
 
 		if [ -z $jq ] ; then
 			wget https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64 -O jq && \
@@ -16,15 +17,15 @@ case "$1" in
 			mv jq /usr/local/bin
 		fi
 		
-		FILES=$rootNotebookDir/*.json
+		FILES=$sourceNotebookDir/*.json
 		for file in $FILES
 		do
 				echo "file: $file"
 				if [ -n "$file" ] ; then
 						id=$(jq '.id' $file | tr -d \")
 						echo "id: $id"
-						mkdir $rootNotebookDir/$id
-						cp $file $rootNotebookDir/$id/note.json
+						mkdir $destNotebookDir/$id
+						cp $file $destNotebookDir/$id/note.json
 				fi
 		done
 	;;
