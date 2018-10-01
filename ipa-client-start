@@ -48,14 +48,18 @@ if [ -f /etc/ipa/ca.crt ] ; then
 		echo "$HOSTNAME_IPA" > /etc/hostname.ipa-client
 	fi
 	
-    # Check if the value of Keytab in the 'ipa host-show' is True: the client is already enrolled.
-    if [ "$(cut -d':' -f2 <<< $(ipa host-show $HOSTNAME_IPA | sed -n -e '/^\s*Keytab:/p'))" == "True" ] ; then
-		echo "System is already FreeIPA-enrolled."
-    else
-		echo "Re-enrolling..."
-        /usr/sbin/ipa-join -h $HOSTNAME_IPA		# API v2
-		echo "FreeIPA Re-enrolled"
-    fi
+	if [ -z "$(ipa host-show $HOSTNAME_IPA)" ] ; then
+		ipa host-add $(hostname -f) --force
+	else
+		# Check if the value of Keytab in the 'ipa host-show' is True: the client is already enrolled.
+		if [ "$(cut -d':' -f2 <<< $(ipa host-show $HOSTNAME_IPA | sed -n -e '/^\s*Keytab:/p'))" == "True" ] ; then
+			echo "System is already FreeIPA-enrolled."
+		else
+			echo "Re-enrolling..."
+			/usr/sbin/ipa-join -h $HOSTNAME_IPA		# API v2
+			echo "FreeIPA Re-enrolled"
+		fi
+	fi    
 	
 	echo "System is ready."
 	
@@ -67,9 +71,11 @@ if [ -f /etc/ipa/ca.crt ] ; then
 	if [ ! -f  /var/run/zeppelin/zeppelin.pid ] ; then
 		echo "Starting Zeppelin"
 		bin/zeppelin.sh &
+		
 		echo "Storing Zeppelin PID [$!] to /var/run/zeppelin/zeppelin.pid"
 		echo $! > /var/run/zeppelin/zeppelin.pid
-		echo "Importing notebooks"
+		
+		# Importing notebooks		
 		/usr/sbin/manage-notebooks.sh restore
 	else
 		echo "Zeppelin already running with PID [$(cat /var/run/zeppelin/zeppelin.pid)]"
@@ -152,8 +158,10 @@ else
 	if [ ! -f  /var/run/zeppelin/zeppelin.pid ] ; then
 		echo "Starting Zeppelin"		
 		bin/zeppelin.sh &
+		
 		echo "Storing Zeppelin PID [$!] to /var/run/zeppelin/zeppelin.pid"
 		echo $! > /var/run/zeppelin/zeppelin.pid
+		
 		# Importing notebooks
 		/usr/sbin/manage-notebooks.sh import
 	else
