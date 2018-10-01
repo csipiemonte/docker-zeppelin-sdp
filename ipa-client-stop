@@ -26,6 +26,7 @@ if [ -f /etc/ipa/ca.crt ] ; then
 	
 	echo "Backup Zeppelin notebooks"
 	/usr/sbin/manage-notebooks.sh backup
+	rm -f /etc/ipa/ca.crt
 else 
 	echo "FreeIPA client is not installed."
 fi

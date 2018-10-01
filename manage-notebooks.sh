@@ -34,7 +34,7 @@ case "$1" in
 				id=$(jq '.id' $item | tr -d \")
 				echo "id: $id"
 				mkdir $sourceNotebookDir/$id
-				mv $item $sourceNotebookDir/$id/$id.json
+				mv $item $sourceNotebookDir/$id/note.json
 			fi
 		done
 
