@@ -67,7 +67,7 @@ case "$1" in
 		if [ -n "$2" ] ; then
 			sourceRootDir="$2"
 		else
-			sourceRootDir="/var/lib/zeppelin/notebook-backup/notebook/"
+			sourceRootDir="/var/lib/zeppelin/notebook-backup/notebook"
 		fi
 
 		destRootDir="/var/lib/zeppelin/notebook"
