@@ -8,64 +8,64 @@ fi
 case "$1" in
 
 	"import" )
-	rootNotebookDir="/var/lib/zeppelin/notebook"
+		rootNotebookDir="/var/lib/zeppelin/notebook"
 
-	if [ -z $jq ] ; then
-		wget https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64 -O jq && \
-		chmod +x jq && \
-		mv jq /usr/local/bin
-	fi
-	
-	FILES=$rootNotebookDir/*.json
-	for file in $FILES
-	do
-			echo "file: $file"
-			if [ -n "$file" ] ; then
-					id=$(jq '.id' $file | tr -d \")
-					echo "id: $id"
-					mkdir $rootNotebookDir/$id
-					cp $file $rootNotebookDir/$id/note.json
-			fi
-	done
+		if [ -z $jq ] ; then
+			wget https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64 -O jq && \
+			chmod +x jq && \
+			mv jq /usr/local/bin
+		fi
+		
+		FILES=$rootNotebookDir/*.json
+		for file in $FILES
+		do
+				echo "file: $file"
+				if [ -n "$file" ] ; then
+						id=$(jq '.id' $file | tr -d \")
+						echo "id: $id"
+						mkdir $rootNotebookDir/$id
+						cp $file $rootNotebookDir/$id/note.json
+				fi
+		done
 	;;
 	
 	"backup" )
-	echo "Backup Zeppelin notebooks"
+		echo "Backup Zeppelin notebooks"
 
-	if [ -n "$2" ] ; then
-		destRootDir="$2"
-	else
-		destRootDir="/var/lib/zeppelin/notebook/backups"
-	fi
+		if [ -n "$2" ] ; then
+			destRootDir="$2"
+		else
+			destRootDir="/var/lib/zeppelin/notebook/backups"
+		fi
 
-	sourceRootDir=/var/lib/zeppelin/notebook
+		sourceRootDir="/var/lib/zeppelin/notebook"
 
-	if [ ! -d $destRootDir ] ; then
-		mkdir -p $destRootDir
-	else
-		rm -rf $destRootDir/*
-	fi
+		if [ ! -d $destRootDir ] ; then
+			mkdir -p $destRootDir
+		else
+			rm -rf $destRootDir/*
+		fi
 
-	cp -r -d $sourceRootDir $destRootDir
+		cp -r -d $sourceRootDir/2* $destRootDir
 	;;
 	
 	"restore" )
 		echo "Restore previous Zeppelin notebooks"
 
-	if [ -n "$2" ] ; then
-		sourceRootDir="$2"
-	else
-		sourceRootDir="/var/lib/zeppelin/notebook/backups"
-	fi
+		if [ -n "$2" ] ; then
+			sourceRootDir="$2"
+		else
+			sourceRootDir="/var/lib/zeppelin/notebook/backups"
+		fi
 
-	destRootDir="/var/lib/zeppelin/notebook"
+		destRootDir="/var/lib/zeppelin/notebook"
 
-	if [ ! -d $sourceRootDir ] ; then
-		echo "$sourceRootDir does not exist"
-		echo "Notebooks not restored"
-	fi
+		if [ ! -d $sourceRootDir ] ; then
+			echo "$sourceRootDir does not exist"
+			echo "Notebooks not restored"
+		fi
 
-	cp -r $sourceRootDir/* $destRootDir
-	rm -rf $sourceRootDir
+		cp -r $sourceRootDir/* $destRootDir
+		rm -rf $sourceRootDir
 	;;
 esac
