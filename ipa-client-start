@@ -66,7 +66,7 @@ if [ -f /etc/ipa/ca.crt ] ; then
     cd /usr/hdp/2.6.0.3-8/zeppelin
 	if [ ! -f  /var/run/zeppelin/zeppelin.pid ] ; then
 		echo "Importing notebooks"
-		/var/lib/zeppelin/notebook/manage-notebooks.sh restore
+		/usr/sbin/manage-notebooks.sh restore
 		echo "Starting Zeppelin"
 		bin/zeppelin.sh &
 		echo "Storing Zeppelin PID [$!] to /var/run/zeppelin/zeppelin.pid"
@@ -141,7 +141,7 @@ else
 		ls -lat /opt/jdk1.8.0_181/jre/bin
 		java -version
 		
-		/usr/sbin/backup-freeipa-files.sh	
+		/usr/sbin/backup-freeipa-files.sh
 	fi
 		
 	# Set proxy
@@ -151,7 +151,7 @@ else
     cd /usr/hdp/2.6.0.3-8/zeppelin
 	if [ ! -f  /var/run/zeppelin/zeppelin.pid ] ; then
 		# Importing notebooks
-		/var/lib/zeppelin/notebook/manage-notebooks.sh import
+		/usr/sbin/manage-notebooks.sh import
 		echo "Starting Zeppelin"		
 		bin/zeppelin.sh &
 		echo "Storing Zeppelin PID [$!] to /var/run/zeppelin/zeppelin.pid"
