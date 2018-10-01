@@ -50,16 +50,17 @@ if [ -f /etc/ipa/ca.crt ] ; then
 	
 	if [ -z "$(ipa host-show $HOSTNAME_IPA)" ] ; then
 		ipa host-add $(hostname -f) --force
+	fi
+	
+	# Check if the value of Keytab in the 'ipa host-show' is True: the client is already enrolled.
+	if [ "$(cut -d':' -f2 <<< $(ipa host-show $HOSTNAME_IPA | sed -n -e '/^\s*Keytab:/p'))" == "True" ] ; then
+		echo "System is already FreeIPA-enrolled."
 	else
-		# Check if the value of Keytab in the 'ipa host-show' is True: the client is already enrolled.
-		if [ "$(cut -d':' -f2 <<< $(ipa host-show $HOSTNAME_IPA | sed -n -e '/^\s*Keytab:/p'))" == "True" ] ; then
-			echo "System is already FreeIPA-enrolled."
-		else
-			echo "Re-enrolling..."
-			/usr/sbin/ipa-join -h $HOSTNAME_IPA		# API v2
-			echo "FreeIPA Re-enrolled"
-		fi
-	fi    
+		echo "Re-enrolling..."
+		/usr/sbin/ipa-join -h $HOSTNAME_IPA		# API v2
+		echo "FreeIPA Re-enrolled"
+	fi
+	    
 	
 	echo "System is ready."
 	
