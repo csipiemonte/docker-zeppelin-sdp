@@ -65,12 +65,12 @@ if [ -f /etc/ipa/ca.crt ] ; then
 	
     cd /usr/hdp/2.6.0.3-8/zeppelin
 	if [ ! -f  /var/run/zeppelin/zeppelin.pid ] ; then
+		echo "Importing notebooks"
+		/var/lib/zeppelin/notebook/import-notebooks.sh restore
 		echo "Starting Zeppelin"
 		bin/zeppelin.sh &
 		echo "Storing Zeppelin PID [$!] to /var/run/zeppelin/zeppelin.pid"
 		echo $! > /var/run/zeppelin/zeppelin.pid
-		echo "Importing notebooks"
-		/var/lib/zeppelin/notebook/import-notebooks.sh
 	else
 		echo "Zeppelin already running with PID [$(cat /var/run/zeppelin/zeppelin.pid)]"
 	fi
@@ -85,7 +85,6 @@ else
 	
 	# Try to restore a previous IPA client installation
 	/usr/sbin/restore-freeipa-files.sh
-	/var/lib/zeppelin/notebook/manage-notebooks.sh restore
 	if [ -f /etc/ipa/ca.crt ] ; then
 		if [ -n $(ipa host-show $HOSTNAME_FQDN) ] ; then
 			echo "Host $HOSTNAME_FQDN checked and exists on IPA server"

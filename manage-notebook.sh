@@ -1,14 +1,14 @@
 #!/bin/bash
 
 if [ -z "$1" ] ; then
-	echo "Usage: manage-notebook.sh [import|backup [dest-dir]|restore [source-dir]]"
+	echo "Usage: manage-notebook.sh [ import | backup [dest-dir] | restore [source-dir] ]"
 	exit 1
 fi
 
 case "$1" in
 
 	"import" )
-	rootNotebookDir=/var/lib/zeppelin/notebook
+	rootNotebookDir="/var/lib/zeppelin/notebook"
 
 	FILES=$rootNotebookDir/*.json
 	for file in $FILES
