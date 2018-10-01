@@ -48,19 +48,14 @@ if [ -f /etc/ipa/ca.crt ] ; then
 		echo "$HOSTNAME_IPA" > /etc/hostname.ipa-client
 	fi
 	
-	if [ -z "$(ipa host-show $HOSTNAME_IPA)" ] ; then
-		ipa host-add $(hostname -f) --force
-	fi
-	
 	# Check if the value of Keytab in the 'ipa host-show' is True: the client is already enrolled.
 	if [ "$(cut -d':' -f2 <<< $(ipa host-show $HOSTNAME_IPA | sed -n -e '/^\s*Keytab:/p'))" == "True" ] ; then
 		echo "System is already FreeIPA-enrolled."
 	else
 		echo "Re-enrolling..."
 		/usr/sbin/ipa-join -h $HOSTNAME_IPA		# API v2
-		echo "FreeIPA Re-enrolled"
-	fi
-	    
+		echo "FreeIPA re-enrolled"
+	fi	    
 	
 	echo "System is ready."
 	
@@ -93,7 +88,8 @@ else
 	# Try to restore a previous IPA client installation
 	/usr/sbin/restore-freeipa-files.sh
 	if [ -f /etc/ipa/ca.crt ] ; then
-		if [ -n $(ipa host-show $HOSTNAME_FQDN) ] ; then
+		echo "Found a previous installation of FreeIPA client for host $HOSTNAME_FQDN"
+		if [ -n "$(ipa host-show $HOSTNAME_FQDN)" ] ; then
 			echo "Host $HOSTNAME_FQDN checked and exists on IPA server"
 			if [ "$(cut -d':' -f2 <<< $(ipa host-show $HOSTNAME_FQDN | sed -n -e '/^\s*Keytab:/p'))" == " False" ] ; then
 				echo "No keytab on IPA server"
@@ -102,6 +98,9 @@ else
 				echo "Re-enroll to IPA Realm"
 				ipa-join -h $HOSTNAME_FQDN               # API v2
 			fi
+		else
+			echo "Host $HOSTNAME_FQDN does not exist on current IPA server. The host was probably deleted."
+			exit 1
 		fi
 	else
 		# Replace last line of /etc/hosts
