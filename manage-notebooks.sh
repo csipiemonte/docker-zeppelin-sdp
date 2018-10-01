@@ -10,6 +10,12 @@ case "$1" in
 	"import" )
 	rootNotebookDir="/var/lib/zeppelin/notebook"
 
+	if [ -z $jq ] ; then
+		wget https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64 -O jq && \
+		chmod +x jq && \
+		mv jq /usr/local/bin
+	fi
+	
 	FILES=$rootNotebookDir/*.json
 	for file in $FILES
 	do

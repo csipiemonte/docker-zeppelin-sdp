@@ -7,8 +7,8 @@ ADD ipa-client-start /usr/sbin/ipa-client-start
 ADD ipa-client-stop /usr/sbin/ipa-client-stop
 ADD backup-freeipa-files.sh /usr/sbin/backup-freeipa-files.sh
 ADD restore-freeipa-files.sh /usr/sbin/restore-freeipa-files.sh
-ADD manage-notebook.sh  /var/lib/zeppelin/notebook/manage-notebook.sh
-RUN chmod -v +x /usr/sbin/ipa-client-start /usr/sbin/ipa-client-stop /usr/sbin/backup-freeipa-files.sh /usr/sbin/restore-freeipa-files.sh /var/lib/zeppelin/notebook/manage-notebook.sh
+ADD manage-notebooks.sh  /var/lib/zeppelin/notebook/manage-notebooks.sh
+RUN chmod -v +x /usr/sbin/ipa-client-start /usr/sbin/ipa-client-stop /usr/sbin/backup-freeipa-files.sh /usr/sbin/restore-freeipa-files.sh /var/lib/zeppelin/notebook/manage-notebooks.sh
 
 # Add freeipa-install.service and enable it via systemctl
 ADD freeipa-install.service /etc/systemd/system/freeipa-install.service
