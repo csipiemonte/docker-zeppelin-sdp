@@ -12,7 +12,7 @@ case "$1" in
 		destNotebookDir="/var/lib/zeppelin/notebook"
 
 		if [ -z $(jq --version) ] ; then
-			wget https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64 -O jq && \
+			wget -q https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64 -O jq && \
 			chmod +x jq && \
 			mv jq /usr/local/bin
 		fi
