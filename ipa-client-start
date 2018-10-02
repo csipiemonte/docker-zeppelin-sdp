@@ -64,17 +64,17 @@ if [ -f /etc/ipa/ca.crt ] ; then
 	export https_proxy=$PROXY
 	
     cd /usr/hdp/2.6.0.3-8/zeppelin
-	if [ ! -f  /var/run/zeppelin/zeppelin.pid ] ; then
+	if [ ! -f  /var/run/zeppelin/pid/zeppelin.pid ] ; then
 		echo "Starting Zeppelin"
 		bin/zeppelin.sh &
 		
-		echo "Storing Zeppelin PID [$!] to /var/run/zeppelin/zeppelin.pid"
-		echo $! > /var/run/zeppelin/zeppelin.pid
+		echo "Storing Zeppelin PID [$!] to /var/run/zeppelin/pid/zeppelin.pid"
+		echo $! > /var/run/zeppelin/pid/zeppelin.pid
 		
 		# Importing notebooks		
 		/usr/sbin/manage-notebooks.sh restore
 	else
-		echo "Zeppelin already running with PID [$(cat /var/run/zeppelin/zeppelin.pid)]"
+		echo "Zeppelin already running with PID [$(cat /var/run/zeppelin/pid/zeppelin.pid)]"
 	fi
 	
 else
@@ -99,7 +99,7 @@ else
 				ipa-join -h $HOSTNAME_FQDN               # API v2
 			fi
 		else
-			echo "Host $HOSTNAME_FQDN does not exist on current IPA server. The host was probably deleted."
+			echo "Host $HOSTNAME_FQDN does not exist on current IPA server. The host was probably previously created and then deleted."
 			exit 1
 		fi
 	else
@@ -155,17 +155,18 @@ else
 	export https_proxy=$PROXY
 		
     cd /usr/hdp/2.6.0.3-8/zeppelin
-	if [ ! -f  /var/run/zeppelin/zeppelin.pid ] ; then
+	if [ ! -f  /var/run/zeppelin/pid/zeppelin.pid ] ; then
 		echo "Starting Zeppelin"		
 		bin/zeppelin.sh &
 		
-		echo "Storing Zeppelin PID [$!] to /var/run/zeppelin/zeppelin.pid"
-		echo $! > /var/run/zeppelin/zeppelin.pid
-		
+		echo "Storing Zeppelin PID [$!] to /var/run/zeppelin/pid/zeppelin.pid"
+		if [ -d /var/run/zeppelin/pid ] ; then
+			echo $! > /var/run/zeppelin/pid/zeppelin.pid		
+		fi
 		# Importing notebooks
 		/usr/sbin/manage-notebooks.sh import
 	else
-		echo "Zeppelin already running with PID [$(cat /var/run/zeppelin/zeppelin.pid)]"
+		echo "Zeppelin already running with PID [$(cat /var/run/zeppelin/pid/zeppelin.pid)]"
 	fi
 fi
 	
