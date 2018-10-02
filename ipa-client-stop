@@ -6,7 +6,7 @@ rm -rf /var/run/*.pid
 if [ -f /var/run/zeppelin/pid/zeppelin.pid ] ; then
 	kill -9 $(cat /var/run/zeppelin/zeppelin.pid)
 	echo "Zeppelin stopped"
-	rm -f /var/run/zeppelin/pid//zeppelin.pid
+	rm -f /var/run/zeppelin/zeppelin.pid
 fi
 
 if [ -f /etc/ipa/ca.crt ] ; then

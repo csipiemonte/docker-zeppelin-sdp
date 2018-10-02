@@ -70,10 +70,10 @@ if [ -f /etc/ipa/ca.crt ] ; then
 		bin/zeppelin.sh &
 		
 		echo "Storing Zeppelin PID [$!] to /var/run/zeppelin/pid/zeppelin.pid"
-		if [ ! -d /var/run/zeppelin/pid ] ; then
-			mkdir /var/run/zeppelin/pid
+		if [ ! -d /var/run/zeppelin ] ; then
+			mkdir /var/run/zeppelin
 		fi
-		echo $! > /var/run/zeppelin/pid/zeppelin.pid
+		echo $! > /var/run/zeppelin/zeppelin.pid
 		
 		# Importing notebooks
 		/usr/sbin/manage-notebooks.sh restore
@@ -167,15 +167,15 @@ else
 	export https_proxy=$PROXY
 		
     cd /usr/hdp/2.6.0.3-8/zeppelin
-	if [ ! -f  /var/run/zeppelin/pid/zeppelin.pid ] ; then
+	if [ ! -f  /var/run/zeppelin/zeppelin.pid ] ; then
 		echo "Starting Zeppelin"		
 		bin/zeppelin.sh &
 		
 		echo "Storing Zeppelin PID [$!] to /var/run/zeppelin/pid/zeppelin.pid"
-		if [ ! -d /var/run/zeppelin/pid ] ; then
-			mkdir /var/run/zeppelin/pid
+		if [ ! -d /var/run/zeppelin ] ; then
+			mkdir /var/run/zeppelin
 		fi
-		echo $! > /var/run/zeppelin/pid/zeppelin.pid
+		echo $! > /var/run/zeppelin/zeppelin.pid
 		
 		# Importing notebooks
 		/usr/sbin/manage-notebooks.sh import
