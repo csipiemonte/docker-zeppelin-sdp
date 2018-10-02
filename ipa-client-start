@@ -111,6 +111,7 @@ else
 		fi
 	fi
 	if [ $restore ] ; then # Run only if this is a brand new installation
+		echo "First ipa-client installation for host $HOSTNAME_FQDN"
 		# Replace last line of /etc/hosts
 		rancher_host_entry=$(tail -n 1 /etc/hosts | head -n1 | awk '{print $2;}')
 		head -n -1 /etc/hosts > /etc/hosts.tmp

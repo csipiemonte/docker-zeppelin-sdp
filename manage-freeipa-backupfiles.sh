@@ -6,7 +6,9 @@ if [ -z "$1" ] ; then
 fi
 
 case "$1" in
+
 	"backup" )
+	
 		echo "Backup current FreeIPA client config"
 		
 		if [ -n "$1" ] ; then
@@ -42,8 +44,9 @@ case "$1" in
 		cp -f /etc/hostname             $destRootDir/etc/hostname.ipa-client
 
 	;;
-case "$1" in
+	
 	"restore" )
+	
 		echo "Restoring previous FreeIPA client config"
 
 		if [ -n "$1" ] ; then
@@ -56,7 +59,6 @@ case "$1" in
 		else
 			sourceRootDir="/etc/security/freeipa-backups"
 		fi
-
 
 		if [ -d "$sourceRootDir/etc" ]; then
 
@@ -76,8 +78,9 @@ case "$1" in
 			rm -f $sourceRootDir/etc/hostname
 			rm -f $sourceRootDir/etc/hosts
 		fi
+		
 	;;
-case "$1" in
+	
 	"delete" )
 		echo "Deleting previous FreeIPA client config: related host does not exist anymore on current ipaserver"
 		
@@ -92,4 +95,5 @@ case "$1" in
 		fi
 		
 	;;
+	
 esac
