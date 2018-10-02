@@ -30,6 +30,13 @@ function stop_running () {
 }
 trap stop_running SIGTERM
 
+function set_proxy {
+	# Set proxy
+	echo "Setting proxy"
+	export http_proxy=$PROXY
+	export https_proxy=$PROXY
+}
+
 rm -rf /var/run/*.pid
 
 if [ -n "$IPA_PORT_53_UDP_ADDR" ] ; then
@@ -59,13 +66,10 @@ if [ -f /etc/ipa/ca.crt ] ; then
 	
 	echo "System is ready."
 	
-	# Set proxy
-	echo "Setting proxy"
-	export http_proxy=$PROXY
-	export https_proxy=$PROXY
+	set_proxy()
 	
     cd /usr/hdp/2.6.0.3-8/zeppelin
-	if [ ! -f  /var/run/zeppelin/pid/zeppelin.pid ] ; then
+	if [ ! -f  /var/run/zeppelin/zeppelin.pid ] ; then
 		echo "Starting Zeppelin"		
 		bin/zeppelin.sh &
 		
