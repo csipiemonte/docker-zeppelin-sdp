@@ -3,7 +3,7 @@
 rm -rf /var/run/*.pid
 
 # Kill Zeppelin process and remove .pid file
-if [ -f /var/run/zeppelin/pid/zeppelin.pid ] ; then
+if [ -f /var/run/zeppelin/zeppelin.pid ] ; then
 	kill -9 $(cat /var/run/zeppelin/zeppelin.pid)
 	echo "Zeppelin stopped"
 	rm -f /var/run/zeppelin/zeppelin.pid
