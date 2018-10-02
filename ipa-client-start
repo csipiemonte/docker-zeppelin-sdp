@@ -107,10 +107,11 @@ else
 		else
 			echo "Host $HOSTNAME_FQDN does not exist on IPA server"
 			/usr/sbin/manage-freeipa-backupfiles.sh delete
+			ipa-client-install --uninstall
 			restore=true
 		fi
 	fi
-	if [ -n "$restore" ] ; then # Run only if this is a brand new installation
+	if [ ! -f /etc/ipa/ca.crt -o -n "$restore" ] ; then # Run following only if this is a brand new installation or if previous backup was deleted
 		echo "First ipa-client installation for host $HOSTNAME_FQDN"
 		# Replace last line of /etc/hosts
 		rancher_host_entry=$(tail -n 1 /etc/hosts | head -n1 | awk '{print $2;}')
