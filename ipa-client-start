@@ -60,18 +60,22 @@ if [ -f /etc/ipa/ca.crt ] ; then
 	echo "System is ready."
 	
 	# Set proxy
+	echo "Setting proxy"
 	export http_proxy=$PROXY
 	export https_proxy=$PROXY
 	
     cd /usr/hdp/2.6.0.3-8/zeppelin
 	if [ ! -f  /var/run/zeppelin/pid/zeppelin.pid ] ; then
-		echo "Starting Zeppelin"
+		echo "Starting Zeppelin"		
 		bin/zeppelin.sh &
 		
 		echo "Storing Zeppelin PID [$!] to /var/run/zeppelin/pid/zeppelin.pid"
+		if [ ! -d /var/run/zeppelin/pid ] ; then
+			mkdir /var/run/zeppelin/pid
+		fi
 		echo $! > /var/run/zeppelin/pid/zeppelin.pid
 		
-		# Importing notebooks		
+		# Importing notebooks
 		/usr/sbin/manage-notebooks.sh restore
 	else
 		echo "Zeppelin already running with PID [$(cat /var/run/zeppelin/pid/zeppelin.pid)]"
@@ -86,7 +90,7 @@ else
 	HOSTNAME_OPTS=--hostname=$HOSTNAME_FQDN
 	
 	# Try to restore a previous IPA client installation
-	/usr/sbin/restore-freeipa-files.sh
+	/usr/sbin/manage-freeipa-backupfiles.sh restore
 	if [ -f /etc/ipa/ca.crt ] ; then
 		echo "Found a previous installation of FreeIPA client for host $HOSTNAME_FQDN"
 		if [ -n "$(ipa host-show $HOSTNAME_FQDN)" ] ; then
@@ -97,13 +101,16 @@ else
 				rm -f /etc/krb5.keytab
 				echo "Re-enroll to IPA Realm"
 				ipa-join -h $HOSTNAME_FQDN               # API v2
+			else
+				echo "Keytab is already on IPA server"
 			fi
 		else
-			echo "Host $HOSTNAME_FQDN does not exist on current IPA server. The host was probably previously created and then deleted."
-			echo "Solution: remove a previous backup of freeipa files."
-			exit 1
+			echo "Host $HOSTNAME_FQDN does not exist on IPA server"
+			/usr/sbin/manage-freeipa-backupfiles.sh delete
+			restore=true
 		fi
-	else
+	fi
+	if [ $restore ] ; then # Run only if this is a brand new installation
 		# Replace last line of /etc/hosts
 		rancher_host_entry=$(tail -n 1 /etc/hosts | head -n1 | awk '{print $2;}')
 		head -n -1 /etc/hosts > /etc/hosts.tmp
@@ -112,6 +119,7 @@ else
 		echo "/etc/hosts updated..."
 		echo "$HOSTNAME_FQDN" > /etc/hostname
 
+		# FreeIPA Client Installation
 		/usr/sbin/ipa-client-install $IPA_CLIENT_INSTALL_OPTS --force --no-nisdomain -p admin -w "$PASSWORD" -U -v  --mkhomedir --realm=$REALM --domain=$IPASERVERDOMAIN --server=$IPASERVER  --enable-dns-updates < /dev/null
 		cp -f /etc/hostname /etc/hostname.ipa-client
 		echo "FreeIPA-enrolled."
@@ -148,10 +156,11 @@ else
 		ls -lat /opt/jdk1.8.0_181/jre/bin
 		java -version
 		
-		/usr/sbin/backup-freeipa-files.sh
+		/usr/sbin/backup-freeipa-files.sh backup
 	fi
 		
 	# Set proxy
+	echo "Setting proxy"
 	export http_proxy=$PROXY
 	export https_proxy=$PROXY
 		
