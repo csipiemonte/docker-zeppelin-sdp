@@ -39,6 +39,7 @@ case "$1" in
 		done
 
 		cp -rf -d $sourceNotebookDir/* $destNotebookDir
+		echo "Import completed"
 	;;
 	
 	"backup" )
@@ -70,6 +71,7 @@ case "$1" in
 		#done
 		
 		cp -r -d $sourceRootDir/* $destRootDir
+		echo "Backup completed"
 	;;
 	
 	"restore" )
@@ -89,6 +91,7 @@ case "$1" in
 		else
 			cp -r $sourceRootDir/* $destRootDir
 		fi
+		echo "Restore completed"
 
 	;;
 esac
