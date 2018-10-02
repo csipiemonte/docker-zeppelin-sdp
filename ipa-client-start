@@ -110,7 +110,7 @@ else
 			restore=true
 		fi
 	fi
-	if [ $restore ] ; then # Run only if this is a brand new installation
+	if [ -n "$restore" ] ; then # Run only if this is a brand new installation
 		echo "First ipa-client installation for host $HOSTNAME_FQDN"
 		# Replace last line of /etc/hosts
 		rancher_host_entry=$(tail -n 1 /etc/hosts | head -n1 | awk '{print $2;}')
@@ -157,7 +157,7 @@ else
 		ls -lat /opt/jdk1.8.0_181/jre/bin
 		java -version
 		
-		/usr/sbin/backup-freeipa-files.sh backup
+		/usr/sbin/manage-freeipa-backupfiles.sh backup
 	fi
 		
 	# Set proxy
