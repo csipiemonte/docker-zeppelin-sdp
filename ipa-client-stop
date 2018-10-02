@@ -24,9 +24,8 @@ if [ -f /etc/ipa/ca.crt ] ; then
 	ipa-join -h $HOSTNAME_IPA --unenroll
 	rm -f /etc/krb5.keytab
 	
-	echo "Backup Zeppelin notebooks"
+	# Backup Zeppelin notebooks
 	/usr/sbin/manage-notebooks.sh backup
-	rm -f /etc/ipa/ca.crt
 else 
 	echo "FreeIPA client is not installed."
 fi
