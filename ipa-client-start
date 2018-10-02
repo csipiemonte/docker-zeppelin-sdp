@@ -66,7 +66,7 @@ if [ -f /etc/ipa/ca.crt ] ; then
 	
 	echo "System is ready."
 	
-	set_proxy()
+	set_proxy
 	
     cd /usr/hdp/2.6.0.3-8/zeppelin
 	if [ ! -f  /var/run/zeppelin/zeppelin.pid ] ; then
@@ -165,10 +165,7 @@ else
 		/usr/sbin/manage-freeipa-backupfiles.sh backup
 	fi
 		
-	# Set proxy
-	echo "Setting proxy"
-	export http_proxy=$PROXY
-	export https_proxy=$PROXY
+	set_proxy 
 		
     cd /usr/hdp/2.6.0.3-8/zeppelin
 	if [ ! -f  /var/run/zeppelin/zeppelin.pid ] ; then
