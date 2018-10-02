@@ -11,8 +11,8 @@ case "$1" in
 	
 		echo "Backup current FreeIPA client config"
 		
-		if [ -n "$1" ] ; then
-			destRootDir="$1"
+		if [ -n "$2" ] ; then
+			destRootDir="$2"
 		else
 			destRootDir="/etc/security/freeipa-backups"
 		fi
@@ -49,8 +49,8 @@ case "$1" in
 	
 		echo "Restoring previous FreeIPA client config"
 
-		if [ -n "$1" ] ; then
-			if [ -d "$1" ] ; then
+		if [ -n "$2" ] ; then
+			if [ -d "$2" ] ; then
 				sourceRootDir="$1"
 			else
 				echo "Directory $1 does not exists"
@@ -84,8 +84,8 @@ case "$1" in
 	"delete" )
 		echo "Deleting previous FreeIPA client config: related host does not exist anymore on current ipaserver"
 		
-		if [ -n "$1" ] ; then
-			targetDir="$1"
+		if [ -n "$2" ] ; then
+			targetDir="$2"
 		else
 			targetDir="/etc/security/freeipa-backups"
 		fi
