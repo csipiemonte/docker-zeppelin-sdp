@@ -1,7 +1,5 @@
 #!/bin/bash
 
-rm -rf /var/run/*.pid
-
 # Kill Zeppelin process and remove .pid file
 if [ -f /var/run/zeppelin/zeppelin.pid ] ; then
 	kill -9 $(cat /var/run/zeppelin/zeppelin.pid)

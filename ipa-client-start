@@ -37,6 +37,25 @@ function set_proxy {
 	export https_proxy=$PROXY
 }
 
+function run_zeppelin {
+	cd /usr/hdp/2.6.0.3-8/zeppelin
+	if [ ! -f  /var/run/zeppelin/zeppelin.pid ] ; then
+		echo "Starting Zeppelin"		
+		bin/zeppelin.sh &
+		
+		echo "Storing Zeppelin PID [$!] to /var/run/zeppelin/zeppelin.pid"
+		if [ ! -d /var/run/zeppelin ] ; then
+			mkdir /var/run/zeppelin
+		fi
+		echo $! > /var/run/zeppelin/zeppelin.pid
+		
+		# Importing notebooks
+		/usr/sbin/manage-notebooks.sh $1
+	else
+		echo "Zeppelin already running with PID [$(cat /var/run/zeppelin/zeppelin.pid)]"
+	fi
+}
+
 rm -rf /var/run/*.pid
 
 if [ -n "$IPA_PORT_53_UDP_ADDR" ] ; then
@@ -68,22 +87,7 @@ if [ -f /etc/ipa/ca.crt ] ; then
 	
 	set_proxy
 	
-    cd /usr/hdp/2.6.0.3-8/zeppelin
-	if [ ! -f  /var/run/zeppelin/zeppelin.pid ] ; then
-		echo "Starting Zeppelin"		
-		bin/zeppelin.sh &
-		
-		echo "Storing Zeppelin PID [$!] to /var/run/zeppelin/pid/zeppelin.pid"
-		if [ ! -d /var/run/zeppelin ] ; then
-			mkdir /var/run/zeppelin
-		fi
-		echo $! > /var/run/zeppelin/zeppelin.pid
-		
-		# Importing notebooks
-		/usr/sbin/manage-notebooks.sh restore
-	else
-		echo "Zeppelin already running with PID [$(cat /var/run/zeppelin/pid/zeppelin.pid)]"
-	fi
+    run_zeppelin restore
 	
 else
 
@@ -165,23 +169,8 @@ else
 		/usr/sbin/manage-freeipa-backupfiles.sh backup
 	fi
 		
-	set_proxy 
-		
-    cd /usr/hdp/2.6.0.3-8/zeppelin
-	if [ ! -f  /var/run/zeppelin/zeppelin.pid ] ; then
-		echo "Starting Zeppelin"		
-		bin/zeppelin.sh &
-		
-		echo "Storing Zeppelin PID [$!] to /var/run/zeppelin/pid/zeppelin.pid"
-		if [ ! -d /var/run/zeppelin ] ; then
-			mkdir /var/run/zeppelin
-		fi
-		echo $! > /var/run/zeppelin/zeppelin.pid
-		
-		# Importing notebooks
-		/usr/sbin/manage-notebooks.sh import
-	else
-		echo "Zeppelin already running with PID [$(cat /var/run/zeppelin/pid/zeppelin.pid)]"
-	fi
+	set_proxy 		
+    
+    run_zeppelin import
 fi
 	
