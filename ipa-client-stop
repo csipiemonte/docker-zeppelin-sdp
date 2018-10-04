@@ -2,9 +2,9 @@
 
 # Kill Zeppelin process and remove .pid file
 if [ -f /var/run/zeppelin/zeppelin.pid ] ; then
+	rm -f /var/run/zeppelin/zeppelin.pid
 	kill -9 $(cat /var/run/zeppelin/zeppelin.pid)
 	echo "Zeppelin stopped"
-	rm -f /var/run/zeppelin/zeppelin.pid
 fi
 
 if [ -f /etc/ipa/ca.crt ] ; then
@@ -16,7 +16,7 @@ if [ -f /etc/ipa/ca.crt ] ; then
 	else
 		IPA=$( curl -si http://$IPASERVER/ | perl -lne 'm!^Location:\shttps?://(.+?)/! and print $1' )
 		IPASERVERDOMAIN=${IPA#*.}
-		HOSTNAME_IPA=$( hostname ).$IPASERVERDOMAIN
+		HOSTNAME_IPA=$( hostname ).$TOOL.$IPASERVERDOMAIN
 	fi
 	
 	ipa-join -h $HOSTNAME_IPA --unenroll

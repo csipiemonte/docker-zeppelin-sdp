@@ -37,6 +37,7 @@ function set_proxy {
 	export https_proxy=$PROXY
 }
 
+# param $1 = [ import | backup | restore ]: parameter to /manage-notebooks.sh
 function run_zeppelin {
 	cd /usr/hdp/2.6.0.3-8/zeppelin
 	if [ ! -f  /var/run/zeppelin/zeppelin.pid ] ; then
@@ -119,55 +120,58 @@ else
 			restore=true
 		fi
 	fi
-	if [ ! -f /etc/ipa/ca.crt -o -n "$restore" ] ; then # Run following only if this is a brand new installation or if previous backup was deleted
-		echo "First ipa-client installation for host $HOSTNAME_FQDN"
-		# Replace last line of /etc/hosts
-		rancher_host_entry=$(tail -n 1 /etc/hosts | head -n1 | awk '{print $2;}')
-		head -n -1 /etc/hosts > /etc/hosts.tmp
-		echo "$(hostname -I) $(hostname).$TOOL.$IPASERVERDOMAIN $(hostname) $rancher_host_entry" >> /etc/hosts.tmp
-		cat /etc/hosts.tmp > /etc/hosts
-		echo "/etc/hosts updated..."
-		echo "$HOSTNAME_FQDN" > /etc/hostname
 
+	# Set hostname by modifying /etc/hosts and /etc/hostname
+	# Replace last line of /etc/hosts
+	rancher_host_entry=$(tail -n 1 /etc/hosts | head -n1 | awk '{print $2;}')
+	head -n -1 /etc/hosts > /etc/hosts.tmp
+	echo "$(hostname -I) $(hostname).$TOOL.$IPASERVERDOMAIN $(hostname) $rancher_host_entry" >> /etc/hosts.tmp
+	cat /etc/hosts.tmp > /etc/hosts
+	echo "/etc/hosts updated..."
+	echo "$HOSTNAME_FQDN" > /etc/hostname
+		
+	if [ ! -f /etc/ipa/ca.crt -o -n "$restore" ] ; then # Run following only if this is a brand new installation or if previous backup was deleted
+	
+		echo "First ipa-client installation for host $HOSTNAME_FQDN"
 		# FreeIPA Client Installation
 		/usr/sbin/ipa-client-install $IPA_CLIENT_INSTALL_OPTS --force --no-nisdomain -p admin -w "$PASSWORD" -U -v  --mkhomedir --realm=$REALM --domain=$IPASERVERDOMAIN --server=$IPASERVER  --enable-dns-updates < /dev/null
 		cp -f /etc/hostname /etc/hostname.ipa-client
 		echo "FreeIPA-enrolled."
-
-		sed -i "/^\[sssd\].*/s//enumerate = True\\n\[sssd\]/" /etc/sssd/sssd.conf
-		cat /etc/sssd/sssd.conf
-		echo "Restarting SSSD"
-		/usr/bin/systemctl restart sssd
-		echo "Aligning the users"
-		sleep 50
-		getent passwd
-		echo "kiniting admin"
-		echo -n "$PASSWORD" | kinit admin
-
-		# $DOMAIN is in the form of "domain.organization.com (DC1.DC2.DC3)"
-		DC1=$(cut -d'.' -f1 <<<"$DOMAIN")
-		DC2=$(cut -d'.' -f2 <<<"$DOMAIN")
-		DC3=$(cut -d'.' -f3 <<<"$DOMAIN")
-		# $PROXY is in the form of "http[s]://PROXYHOST:PROXYPORT"
-		PROXYHOST=$(cut -d'/' -f3 <<<$(cut -d':' -f2 <<<"$PROXY"))
-		PROXYPORT=$(cut -d':' -f3 <<<$PROXY)
-
-		cp /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini.template /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini
-		sed -i "/^#ldapRealm =.*/s//ldapRealm = org.apache.zeppelin.realm.LdapGroupRealm/" /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini
-		sed -i "/^#ldapRealm.contextFactory.url.*/s//ldapRealm.contextFactory.url = ldap:\/\/$IPASERVER:389/" /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini
-		sed -i "/^#ldapRealm.contextFactory.environment\[ldap.searchBase\].*/s//ldapRealm.contextFactory.environment\[ldap.searchBase\] = DC=$DC1,DC=$DC2,DC=$DC3/" /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini
-		sed -i "/^#ldapRealm.userDnTemplate.*/s//ldapRealm.userDnTemplate = uid={0},CN=users,CN=accounts,DC=$DC1,DC=$DC2,DC=$DC3/" /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini
-		sed -i "/^JAVA_OPTS+.*/s//JAVA_OPTS+=\" -Dhttps.proxyHost=$PROXYHOST -Dhttps.proxyPort=$PROXYPORT -Dhttp.proxyHost=$PROXYHOST -Dhttp.proxyPort=$PROXYPORT -Dzeppelin.log.file=\${ZEPPELIN_LOGFILE}\"/" /usr/hdp/2.6.0.3-8/zeppelin/bin/zeppelin.sh
-
-		echo "Checking alternatives"
-		alternatives --list
-		echo "Checking java"
-		ls -lat /opt/jdk1.8.0_181/bin
-		ls -lat /opt/jdk1.8.0_181/jre/bin
-		java -version
-		
-		/usr/sbin/manage-freeipa-backupfiles.sh backup
 	fi
+	
+	sed -i "/^\[sssd\].*/s//enumerate = True\\n\[sssd\]/" /etc/sssd/sssd.conf
+	cat /etc/sssd/sssd.conf
+	echo "Restarting SSSD"
+	/usr/bin/systemctl restart sssd
+	echo "Aligning the users"
+	sleep 50
+	getent passwd
+	echo "kiniting admin"
+	echo -n "$PASSWORD" | kinit admin
+
+	# $DOMAIN is in the form of "domain.organization.com (DC1.DC2.DC3)"
+	DC1=$(cut -d'.' -f1 <<<"$DOMAIN")
+	DC2=$(cut -d'.' -f2 <<<"$DOMAIN")
+	DC3=$(cut -d'.' -f3 <<<"$DOMAIN")
+	# $PROXY is in the form of "http[s]://PROXYHOST:PROXYPORT"
+	PROXYHOST=$(cut -d'/' -f3 <<<$(cut -d':' -f2 <<<"$PROXY"))
+	PROXYPORT=$(cut -d':' -f3 <<<$PROXY)
+
+	cp /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini.template /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini
+	sed -i "/^#ldapRealm =.*/s//ldapRealm = org.apache.zeppelin.realm.LdapGroupRealm/" /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini
+	sed -i "/^#ldapRealm.contextFactory.url.*/s//ldapRealm.contextFactory.url = ldap:\/\/$IPASERVER:389/" /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini
+	sed -i "/^#ldapRealm.contextFactory.environment\[ldap.searchBase\].*/s//ldapRealm.contextFactory.environment\[ldap.searchBase\] = DC=$DC1,DC=$DC2,DC=$DC3/" /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini
+	sed -i "/^#ldapRealm.userDnTemplate.*/s//ldapRealm.userDnTemplate = uid={0},CN=users,CN=accounts,DC=$DC1,DC=$DC2,DC=$DC3/" /usr/hdp/2.6.0.3-8/zeppelin/conf/shiro.ini
+	sed -i "/^JAVA_OPTS+.*/s//JAVA_OPTS+=\" -Dhttps.proxyHost=$PROXYHOST -Dhttps.proxyPort=$PROXYPORT -Dhttp.proxyHost=$PROXYHOST -Dhttp.proxyPort=$PROXYPORT -Dzeppelin.log.file=\${ZEPPELIN_LOGFILE}\"/" /usr/hdp/2.6.0.3-8/zeppelin/bin/zeppelin.sh
+
+	echo "Checking alternatives"
+	alternatives --list
+	echo "Checking java"
+	ls -lat /opt/jdk1.8.0_181/bin
+	ls -lat /opt/jdk1.8.0_181/jre/bin
+	java -version
+	
+	/usr/sbin/manage-freeipa-backupfiles.sh backup	
 		
 	set_proxy 		
     
