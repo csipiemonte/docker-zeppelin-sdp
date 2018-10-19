@@ -1,8 +1,10 @@
 [Unit]
-Description = configure freeipa
+Description = FreeIPA + Zeppelin
 After = network.target
 [Service]
-ExecStart = /usr/sbin/ipa-client-configure-first
+ExecStart = /usr/sbin/ipa-client-start
+ExecStop = /usr/sbin/ipa-client-stop
 User = root
+RemainAfterExit=yes
 [Install]
 WantedBy = multi-user.target
