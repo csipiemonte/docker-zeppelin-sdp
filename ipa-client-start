@@ -126,7 +126,7 @@ else
 	cp /etc/hosts /etc/hosts.tmp
 	rancher_host_entry=$(tail -n 1 /etc/hosts.tmp | head -n1 | awk '{print $2;}')
 	IP=$(hostname -I)
-	sed -i "s/${IP}.*$/${IP} ${TOOL}.${PROJECT} ${TOOL}.${PROJECT}.${IPASERVERDOMAIN} ${rancher_host_entry}/" /etc/hosts.tmp
+	sed -i "s/${IP}.*$/${IP} ${TOOL}.${PROJECT} ${TOOL}.${PROJECT}.${IPASERVERDOMAIN}/" /etc/hosts.tmp
 	cat /etc/hosts.tmp > /etc/hosts
 	echo "/etc/hosts updated..."
 	echo "$HOSTNAME_FQDN" > /etc/hostname
