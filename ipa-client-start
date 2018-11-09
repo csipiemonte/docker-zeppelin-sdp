@@ -95,7 +95,7 @@ else
 	# Set hostname for ipa-client-install
 	IPA=$( curl -si http://$IPASERVER/ | perl -lne 'm!^Location:\shttps?://(.+?)/! and print $1' )
 	IPASERVERDOMAIN=${IPA#*.}
-	HOSTNAME_FQDN=$( hostname ).$TOOL.$IPASERVERDOMAIN
+	HOSTNAME_FQDN=$TOOL.$PROJECT.$IPASERVERDOMAIN
 	HOSTNAME_OPTS=--hostname=$HOSTNAME_FQDN
 	
 	# Try to restore a previous IPA client installation
@@ -123,9 +123,10 @@ else
 
 	# Set hostname by modifying /etc/hosts and /etc/hostname
 	# Replace last line of /etc/hosts
-	rancher_host_entry=$(tail -n 1 /etc/hosts | head -n1 | awk '{print $2;}')
-	head -n -1 /etc/hosts > /etc/hosts.tmp
-	echo "$(hostname -I) $(hostname).$TOOL.$IPASERVERDOMAIN $(hostname) $rancher_host_entry" >> /etc/hosts.tmp
+	cp /etc/hosts /etc/hosts.tmp
+	rancher_host_entry=$(tail -n 1 /etc/hosts.tmp | head -n1 | awk '{print $2;}')
+	IP=$(hostname -I)
+	sed -i "s/${IP}.*$/${IP} ${TOOL}.${PROJECT} ${TOOL}.${PROJECT}.${IPASERVERDOMAIN} ${rancher_host_entry}/" /etc/hosts.tmp
 	cat /etc/hosts.tmp > /etc/hosts
 	echo "/etc/hosts updated..."
 	echo "$HOSTNAME_FQDN" > /etc/hostname
