@@ -60,7 +60,11 @@ function run_zeppelin {
 rm -rf /var/run/*.pid
 
 if [ -n "$IPA_PORT_53_UDP_ADDR" ] ; then
-	echo "nameserver $IPA_PORT_53_UDP_ADDR" > /etc/resolv.conf
+	#echo "nameserver $IPA_PORT_53_UDP_ADDR" > /etc/resolv.conf
+	cp /etc/resolv.conf /etc/resolv.conf.tmp
+	sed -i "s/^.*search.*$/search ${IPASERVERDOMAIN}/" /etc/resolv.conf.tmp
+	cat /etc/resolv.conf.tmp > /etc/resolv.conf
+	rm -f /etc/resolv.conf.tmp
 fi
 
 if [ -f /etc/ipa/ca.crt ] ; then
