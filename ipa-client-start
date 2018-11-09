@@ -59,6 +59,10 @@ function run_zeppelin {
 
 rm -rf /var/run/*.pid
 
+# Set hostname for ipa-client-install
+IPA=$( curl -si http://$IPASERVER/ | perl -lne 'm!^Location:\shttps?://(.+?)/! and print $1' )
+IPASERVERDOMAIN=${IPA#*.}
+
 if [ -n "$IPA_PORT_53_UDP_ADDR" ] ; then
 	#echo "nameserver $IPA_PORT_53_UDP_ADDR" > /etc/resolv.conf
 	cp /etc/resolv.conf /etc/resolv.conf.tmp
@@ -96,9 +100,6 @@ if [ -f /etc/ipa/ca.crt ] ; then
 	
 else
 
-	# Set hostname for ipa-client-install
-	IPA=$( curl -si http://$IPASERVER/ | perl -lne 'm!^Location:\shttps?://(.+?)/! and print $1' )
-	IPASERVERDOMAIN=${IPA#*.}
 	HOSTNAME_FQDN=$TOOL.$PROJECT.$IPASERVERDOMAIN
 	HOSTNAME_OPTS=--hostname=$HOSTNAME_FQDN
 	
