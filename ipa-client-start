@@ -61,7 +61,7 @@ rm -rf /var/run/*.pid
 
 if [ -n "$IPA_PORT_53_UDP_ADDR" ] ; then
 	#echo "nameserver $IPA_PORT_53_UDP_ADDR" > /etc/resolv.conf
-	vIPA=$( curl -si http://$IPASERVER/ | perl -lne 'm!^Location:\shttps?://(.+?)/! and print $1' )
+	IPA=$( curl -si http://$IPASERVER/ | perl -lne 'm!^Location:\shttps?://(.+?)/! and print $1' )
 	IPASERVERDOMAIN=${IPA#*.}
 	cp /etc/resolv.conf /etc/resolv.conf.tmp
 	sed -i "s/^.*search.*$/search ${IPASERVERDOMAIN}/" /etc/resolv.conf.tmp
