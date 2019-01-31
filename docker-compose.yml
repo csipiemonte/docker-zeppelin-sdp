@@ -1,0 +1,25 @@
+version: "2"
+services:
+
+  zeppelin:
+    container_name: zeppelin
+    image: pietrocannalire/zeppelin:0.7.3
+    environment:
+      - ANONYMOUS_DENIED=true
+      - DOMAIN=$DOMAIN
+      - HOSTNAME=$HOSTNAME 
+      - IPASERVER=$IPASERVER
+      - PASSWORD=$PASSWORD
+      - PROJECT=$PROJECT
+      - PROXY=$PROXY
+      - REALM=$REALM
+      - THE_ADMIN_PASSWORD=$THE_ADMIN_PASSWORD
+      - TOOL=$TOOL
+    ports:
+       - 8081:8080
+       - 8443:8443
+    volumes:
+       - ./logs:$ZEPPELIN_HOME/logs
+       - ./notebook:$ZEPPELIN_HOME/notebook
+       - ./freeipa-backups:/etc/security/freeipa-backups
+

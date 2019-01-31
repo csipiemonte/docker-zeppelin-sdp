@@ -57,26 +57,26 @@ case "$1" in
 				exit 1
 			fi
 		else
-			sourceRootDir="/etc/security/freeipa-backups"
+			sourceRootDir="/etc/security/freeipa-backups/etc"
 		fi
 
-		if [ -d "$sourceRootDir/etc" ]; then
+		if [ -d "$sourceRootDir/" -a -d "$sourceRootDir/etc/sssd" -a -d "$sourceRootDir/etc/sysconfig" -a -d "$sourceRootDir/etc/ntp" -a -d "$sourceRootDir/etc/ipa" -a -d "$sourceRootDir/etc/openldap" -a -d "$sourceRootDir/etc/pki" ]; then
 
-			/bin/mv -f $sourceRootDir/etc/sssd/sssd.conf 		/etc/sssd/sssd.conf
-			/bin/mv -f $sourceRootDir/etc/sysconfig/ntpd		/etc/sysconfig/
-			/bin/mv -f $sourceRootDir/etc/ntp/step-tickers	/etc/ntp/step-tickers
-			/bin/mv -f $sourceRootDir/etc/krb5.conf			/etc/krb5.conf
-			/bin/mv -f $sourceRootDir/etc/ipa/ca.crt 			/etc/ipa/ca.crt
-			/bin/mv -f $sourceRootDir/etc/ipa/default.conf 	/etc/ipa/default.conf
-			/bin/mv -f $sourceRootDir/etc/openldap/ldap.conf 	/etc/openldap/ldap.conf
-			/bin/mv -f $sourceRootDir/etc/pki/nssdb/* 		/etc/pki/nssdb
-			/bin/mv -f $sourceRootDir/etc/krb5.keytab 		/etc/krb5.keytab
+			/bin/mv -f $sourceRootDir/sssd/sssd.conf 	/etc/sssd/sssd.conf
+			/bin/mv -f $sourceRootDir/sysconfig/ntpd	/etc/sysconfig/
+			/bin/mv -f $sourceRootDir/ntp/step-tickers	/etc/ntp/step-tickers
+			/bin/mv -f $sourceRootDir/krb5.conf		/etc/krb5.conf
+			/bin/mv -f $sourceRootDir/ipa/ca.crt 		/etc/ipa/ca.crt
+			/bin/mv -f $sourceRootDir/ipa/default.conf 	/etc/ipa/default.conf
+			/bin/mv -f $sourceRootDir/openldap/ldap.conf 	/etc/openldap/ldap.conf
+			/bin/mv -f $sourceRootDir/pki/nssdb/* 		/etc/pki/nssdb
+			/bin/mv -f $sourceRootDir/krb5.keytab 		/etc/krb5.keytab
 
-			cat $sourceRootDir/etc/hosts > /etc/hosts
-			cat $sourceRootDir/etc/hostname > /etc/hostname
-			cat $sourceRootDir/etc/hostname > /etc/hostname.ipa-client
-			rm -f $sourceRootDir/etc/hostname
-			rm -f $sourceRootDir/etc/hosts
+			cat $sourceRootDir/hosts > /etc/hosts
+			cat $sourceRootDir/hostname > /etc/hostname
+			cat $sourceRootDir/hostname > /etc/hostname.ipa-client
+			#rm -f $sourceRootDir/hostname
+			#rm -f $sourceRootDir/hosts
 		fi
 		
 	;;
