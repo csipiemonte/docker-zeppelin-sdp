@@ -1,7 +1,15 @@
 # Clone from the CentOS 7
-FROM centos:7
+FROM centos/systemd
 
 MAINTAINER Pietro Cannalire
+
+
+### Adding files for systemd and dbus
+ADD systemd/dbus.service /etc/systemd/system/dbus.service
+ADD systemd/systemctl /usr/bin/systemctl
+RUN ln -sf dbus.service /etc/systemd/system/messagebus.service && \
+	chmod -v +x /usr/bin/systemctl && \
+	yum swap -y -- remove fakesystemd -- install systemd systemd-libs && yum clean all
 
 
 ### Installing FreeIPA client
