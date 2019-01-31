@@ -17,10 +17,6 @@ ADD systemd/systemctl /usr/bin/systemctl
 RUN chmod -v +x /usr/bin/systemctl
 
 
-### Installing FreeIPA client
-RUN yum install -y ipa-client dbus-python perl 'perl(Data::Dumper)' 'perl(Time::HiRes)' && yum clean all
-
-
 ### Installing Java - OpenJDK
 RUN yum install -y java-1.8.0-openjdk-devel && java -version
 
