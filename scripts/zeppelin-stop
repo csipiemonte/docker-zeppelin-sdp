@@ -13,6 +13,8 @@ if [ -f /etc/ipa/ca.crt ] ; then
 		HOSTNAME_IPA=$TOOL.$( hostname ).$IPASERVERDOMAIN
 	fi
 	
+	echo "Unenrolling client $HOSTNAME_IPA"
+	#cat /etc/ipa/default.conf
 	ipa-join -h $HOSTNAME_IPA --unenroll
 	rm -f /etc/krb5.keytab
 	
