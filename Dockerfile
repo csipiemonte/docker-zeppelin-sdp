@@ -27,13 +27,13 @@ ARG VERSION=0.7.3
 
 ENV ZEPPELIN_HOME=/opt/zeppelin
 
-RUN yum install -y curl ntp jq && yum clean all && \
+RUN yum install -y curl ntp jq openssh-server openssh-clients && yum clean all && \
     mkdir -p ${ZEPPELIN_HOME} && \
 	curl ${DIST_MIRROR}/zeppelin-${VERSION}/zeppelin-${VERSION}-bin-all.tgz | tar xvz -C ${ZEPPELIN_HOME} && \
 	mv ${ZEPPELIN_HOME}/zeppelin-${VERSION}-bin-all/* ${ZEPPELIN_HOME} && \
 	rm -rf ${ZEPPELIN_HOME}/zeppelin-${VERSION}-bin-all && \
 	rm -rf *.tgz
-
+	
 EXPOSE 8080 8443 
 VOLUME ${ZEPPELIN_HOME}/logs \
        ${ZEPPELIN_HOME}/notebook \
