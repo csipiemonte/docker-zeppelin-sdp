@@ -21,13 +21,13 @@ case "$1" in
 			mkdir -p $destRootDir
 		fi
 
-		mkdir -p $destRootDir/etc/sssd
-		mkdir -p $destRootDir/etc/ipa
-		mkdir -p $destRootDir/etc/openldap
-		mkdir -p $destRootDir/etc/pki/nssdb
-		mkdir -p $destRootDir/etc/sysconfig
-		mkdir -p $destRootDir/etc/sysconfig/network
-		mkdir -p $destRootDir/etc/ntp
+		mkdir -p $destRootDir/sssd
+		mkdir -p $destRootDir/ipa
+		mkdir -p $destRootDir/openldap
+		mkdir -p $destRootDir/pki/nssdb
+		mkdir -p $destRootDir/sysconfig
+		mkdir -p $destRootDir/sysconfig/network
+		mkdir -p $destRootDir/ntp
 
 		cp -vf /etc/sssd/sssd.conf		 $destRootDir/sssd/sssd.conf
 		cp -vf /etc/sysconfig/ntpd       $destRootDir/sysconfig/
