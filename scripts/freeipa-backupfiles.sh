@@ -39,9 +39,9 @@ case "$1" in
 		cp -vf /etc/pki/nssdb/*          $destRootDir/pki/nssdb
 		cp -vf /etc/krb5.keytab          $destRootDir/krb5.keytab
 
-		cp -vf /etc/hosts                $destRootDir/etc/hosts
-		cp -vf /etc/hostname             $destRootDir/etc/hostname
-		cp -vf /etc/hostname             $destRootDir/etc/hostname.ipa-client
+		cp -vf /etc/hosts                $destRootDir/hosts
+		cp -vf /etc/hostname             $destRootDir/hostname
+		cp -vf /etc/hostname             $destRootDir/hostname.ipa-client
 
 	;;
 	
