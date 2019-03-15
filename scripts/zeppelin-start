@@ -1,0 +1,169 @@
+#!/bin/bash
+
+rm -f ${ZEPPELIN_HOME}/conf/zeppelin-site.xml
+cp ${ZEPPELIN_HOME}/conf/zeppelin-site.xml.template ${ZEPPELIN_HOME}/conf/zeppelin-site.xml
+
+# Anonymous login
+if [ ! -z "$ANONYMOUS_DENIED" ]; then sed -i '/>zeppelin.anonymous.allowed</!b;n;c\ \ <value>false</value>' ${ZEPPELIN_HOME}/conf/zeppelin-site.xml; fi
+
+# Groovy interpreter
+sed -i "s@\(<value>org.apache.zeppelin.spark.SparkInterpreter.*\)\(</value.*\)@\1,org.apache.zeppelin.groovy.GroovyInterpreter\2@" ${ZEPPELIN_HOME}/conf/zeppelin-site.xml
+sed -i "s@\(<value>spark,md.*\)\(</value.*\)@\1,groovy\2@" ${ZEPPELIN_HOME}/conf/zeppelin-site.xml
+
+# Notebook Homescreen
+if [ ! -z "$HOMESCREEN" ]; then
+  sed -i '/>zeppelin.notebook.homescreen</!b;n;c\ \ <value>'"${HOMESCREEN}"'</value>' ${ZEPPELIN_HOME}/conf/zeppelin-site.xml
+  sed -i '/>zeppelin.notebook.homescreen.hide</!b;n;c\ \ <value>true</value>' ${ZEPPELIN_HOME}/conf/zeppelin-site.xml
+fi
+
+# Run SSH service: https://docs.docker.com/engine/examples/running_ssh_service/
+if [ -z "$ZEPPELINUSER_PASSWORD" ] ; then 
+	export ZEPPELINUSER_PASSWORD=my-pass # overwrite with a personal pw
+fi
+# Create new user 
+useradd zeppelin
+echo $ZEPPELINUSER_PASSWORD | passwd zeppelin --stdin 
+chown zeppelin:zeppelin /etc/security/keytabs 
+#Prepare for running SSH
+mkdir /var/run/sshd 
+echo "zeppelin:$ZEPPELINUSER_PASSWORD" | chpasswd 
+sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config 
+sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd 
+export NOTVISIBLE="in users profile"
+echo "export VISIBLE=now" >> /etc/profile 
+/usr/bin/ssh-keygen -A 
+/usr/sbin/sshd	
+
+function stop_running () {
+    echo "[$0] SIGTERM received. Gracefully stopping."
+    
+    /usr/sbin/freeipa-backupfiles.sh backup
+    /usr/sbin/zeppelin-stop
+	
+}
+trap stop_running TERM
+
+function set_proxy {
+	# Set proxy
+	echo "Setting proxy"
+	export http_proxy=$PROXY
+	export https_proxy=$PROXY
+}
+
+function run_zeppelin {	
+        #${ZEPPELIN_HOME}/bin/zeppelin-daemon.sh start; sleep 1; tail -F ${ZEPPELIN_HOME}/logs/zeppelin-*.log
+	${ZEPPELIN_HOME}/bin/zeppelin-daemon.sh start; sleep 1	
+}
+
+
+if [ -f /etc/ipa/ca.crt ] ; then
+	# Lo sto riavviando: tutto è dove dovrebbe stare	
+
+	# Retrieve HOSTNAME_IPA
+	IPA=$( curl -si http://$IPASERVER/ | perl -lne 'm!^Location:\shttps?://(.+?)/! and print $1' )
+	IPASERVERDOMAIN=${IPA#*.}
+	if [ -f /etc/hostname.ipa-client ] ; then
+		HOSTNAME_IPA=$(cat /etc/hostname.ipa-client)
+	else
+		HOSTNAME_IPA=$(hostname).$TOOL.$IPASERVERDOMAIN
+		echo "$HOSTNAME_IPA" > /etc/hostname.ipa-client
+	fi
+	
+	# Check if the value of Keytab in the 'ipa host-show' is True: the client is already enrolled.
+	if [ "$(cut -d':' -f2 <<< $(ipa host-show $HOSTNAME_IPA | sed -n -e '/^\s*Keytab:/p'))" == "True" ] ; then
+		echo "System is already FreeIPA-enrolled."
+	else
+		echo "Re-enrolling..."
+		/usr/sbin/ipa-join -h $HOSTNAME_IPA		# API v2
+		echo "FreeIPA re-enrolled"
+	fi
+	
+	echo "FreeIPA is ready."
+			
+else
+	# Nuova installazione/riavvio di uno Zeppelin che già esisteva: non è stato effettuato ipa-client-install
+
+	# Set hostname for ipa-client-install
+	IPA=$( curl -si http://$IPASERVER/ | perl -lne 'm!^Location:\shttps?://(.+?)/! and print $1' )
+	IPASERVERDOMAIN=${IPA#*.}
+	HOSTNAME_FQDN=$TOOL.$PROJECT.$IPASERVERDOMAIN
+	HOSTNAME_OPTS=--hostname=$HOSTNAME_FQDN
+	
+	# Try to restore a previous IPA client installation
+	/usr/sbin/freeipa-backupfiles.sh restore
+	if [ -f /etc/ipa/ca.crt ] ; then
+		echo "Found a previous installation of FreeIPA client for host $HOSTNAME_FQDN"
+		if [ -n "$(ipa host-show $HOSTNAME_FQDN)" ] ; then
+			echo "Host $HOSTNAME_FQDN checked and exists on IPA server"
+			if [ "$(cut -d':' -f2 <<< $(ipa host-show $HOSTNAME_FQDN | sed -n -e '/^\s*Keytab:/p'))" == " False" ] ; then
+				echo "No keytab on IPA server"
+				echo "Removing useless restored keytab"
+				rm -f /etc/krb5.keytab
+				echo "Re-enroll to IPA Realm"
+				ipa-join -h $HOSTNAME_FQDN               # API v2
+			else
+				echo "Keytab is already on IPA server"
+			fi
+		else
+			echo "Host $HOSTNAME_FQDN does not exist on IPA server"
+			/usr/sbin/manage-freeipa-backupfiles.sh delete
+			ipa-client-install --uninstall
+			restore=true	# Forza l'installazione da zero del client: l'host non c'è sull'IPA server
+		fi
+
+	fi
+
+	# Set hostname by modifying /etc/hosts and /etc/hostname
+	# Replace last line of /etc/hosts
+	cp /etc/hosts /etc/hosts.tmp
+	#rancher_host_entry=$(tail -n 1 /etc/hosts.tmp | head -n1 | awk '{print $2;}')
+
+	IP=$(hostname -I | sed 's/^[ \t]*//;s/[ \t]*$//')
+        sed -i "s/^.*${IP}.*/${IP} ${TOOL}.${PROJECT}.${IPASERVERDOMAIN} ${TOOL}.${PROJECT}/" /etc/hosts.tmp
+	cat /etc/hosts.tmp > /etc/hosts
+	echo "/etc/hosts updated..."
+	echo "$HOSTNAME_FQDN" > /etc/hostname
+
+	if [ ! -f /etc/ipa/ca.crt -o -n "$restore" ] ; then # Run following only if this is a brand new installation or if previous backup was deleted
+	
+		echo "First ipa-client installation for host $HOSTNAME_FQDN"
+		# FreeIPA Client Installation
+		/usr/sbin/ipa-client-install $IPA_CLIENT_INSTALL_OPTS --force --no-nisdomain -p admin -w "$PASSWORD" -U -v  --mkhomedir --realm=$REALM --domain=$IPASERVERDOMAIN --server=$IPASERVER  --enable-dns-updates < /dev/null
+		cp -f /etc/hostname /etc/hostname.ipa-client
+		echo "FreeIPA-enrolled."
+	fi
+	
+	sed -i "/^\[sssd\].*/s//enumerate = True\\n\[sssd\]/" /etc/sssd/sssd.conf
+	cat /etc/sssd/sssd.conf
+	echo "Restarting SSSD"
+	/usr/bin/systemctl restart sssd
+	echo "Aligning the users"
+	sleep 50
+	getent passwd
+	echo "kiniting admin"
+	echo -n "$PASSWORD" | kinit admin
+
+	# $DOMAIN is in the form of "domain.organization.com (DC1.DC2.DC3)"
+	DC1=$(cut -d'.' -f1 <<<"$DOMAIN")
+	DC2=$(cut -d'.' -f2 <<<"$DOMAIN")
+	DC3=$(cut -d'.' -f3 <<<"$DOMAIN")
+	# $PROXY is in the form of "http[s]://PROXYHOST:PROXYPORT"
+	PROXYHOST=$(cut -d'/' -f3 <<<$(cut -d':' -f2 <<<"$PROXY"))
+	PROXYPORT=$(cut -d':' -f3 <<<$PROXY)
+
+	cp $ZEPPELIN_HOME/conf/shiro.ini.template $ZEPPELIN_HOME/conf/shiro.ini
+	sed -i "/^#ldapRealm =.*/s//ldapRealm = org.apache.zeppelin.realm.LdapGroupRealm/" $ZEPPELIN_HOME/conf/shiro.ini
+	sed -i "/^#ldapRealm.contextFactory.url.*/s//ldapRealm.contextFactory.url = ldap:\/\/$IPASERVER:389/" $ZEPPELIN_HOME/conf/shiro.ini
+	sed -i "/^#ldapRealm.contextFactory.environment\[ldap.searchBase\].*/s//ldapRealm.contextFactory.environment\[ldap.searchBase\] = DC=$DC1,DC=$DC2,DC=$DC3/" $ZEPPELIN_HOME/conf/shiro.ini
+	sed -i "/^#ldapRealm.userDnTemplate.*/s//ldapRealm.userDnTemplate = uid={0},CN=users,CN=accounts,DC=$DC1,DC=$DC2,DC=$DC3/" $ZEPPELIN_HOME/conf/shiro.ini
+	sed -i "/^JAVA_OPTS+.*/s//JAVA_OPTS+=\" -Dhttps.proxyHost=$PROXYHOST -Dhttps.proxyPort=$PROXYPORT -Dhttp.proxyHost=$PROXYHOST -Dhttp.proxyPort=$PROXYPORT -Dzeppelin.log.file=\${ZEPPELIN_LOGFILE}\"/" $ZEPPELIN_HOME/bin/zeppelin.sh
+	
+	/usr/sbin/freeipa-backupfiles.sh backup
+
+fi
+
+run_zeppelin
+
+echo 'Running...'
+while true ; do sleep 1000 & wait $! ; done
+

@@ -1,0 +1,24 @@
+#!/bin/bash
+
+${ZEPPELIN_HOME}/bin/zeppelin-daemon.sh stop
+
+if [ -f /etc/ipa/ca.crt ] ; then
+	echo "FreeIPA client is installed. Starting the unenrollement"
+	
+	if [ -f /etc/hostname.ipa-client ] ; then
+		HOSTNAME_IPA=$(cat /etc/hostname.ipa-client)
+	else
+		IPA=$( curl -si http://$IPASERVER/ | perl -lne 'm!^Location:\shttps?://(.+?)/! and print $1' )
+		IPASERVERDOMAIN=${IPA#*.}
+		HOSTNAME_IPA=$TOOL.$( hostname ).$IPASERVERDOMAIN
+	fi
+	
+	echo "Unenrolling client $HOSTNAME_IPA"
+	#cat /etc/ipa/default.conf
+	ipa-join -h $HOSTNAME_IPA --unenroll
+	rm -f /etc/krb5.keytab
+	
+else 
+	echo "FreeIPA client is not installed."
+fi
+	
